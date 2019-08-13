@@ -5,6 +5,8 @@
 // Only for MultibyteToWideChar .. Should be removed.
 #include "windows.h"
 
+#include <stdexcept>
+
 namespace inspector {
 namespace utils {
 

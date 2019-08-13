@@ -11,7 +11,7 @@
 
 #include <jsiruntime/V8Runtime.h>
 
-#include <cxxreact/MessageQueueThread.h>
+// #include <cxxreact/MessageQueueThread.h>
 
 namespace v8runtime {
 
@@ -137,7 +137,9 @@ void WorkerThreadsTaskRunner::TimerFunc() {
 void ForegroundTaskRunner::PostTask(std::unique_ptr<v8::Task> task) {
   // Note :: We assume that the underlying message queue implementation is properly syncronized.
   std::shared_ptr<v8::Task> s_task(task.release());
-  queue_->runOnQueue([s_task2=std::move(s_task)]() { s_task2->Run(); });
+  
+  // TODODODO :: ANAND
+  // queue_->runOnQueue([s_task2=std::move(s_task)]() { s_task2->Run(); });
 }
 
 V8Platform::V8Platform() : tracing_controller_(std::make_unique<v8::TracingController>()), worker_task_runner_(std::make_unique<WorkerThreadsTaskRunner>()) {}

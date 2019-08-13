@@ -50,7 +50,7 @@ std::string StringViewToUtf8(const v8_inspector::StringView& view) {
 std::unique_ptr<v8_inspector::StringBuffer> Utf8ToStringView(const std::string& message) {
 	std::wstring wstr = inspector::utils::Utf8ToUtf16(message.data(), message.length());
 	v8_inspector::StringView view(reinterpret_cast<const uint16_t*>(wstr.c_str()), wstr.length());
-	return v8_inspector::StringBuffer::create(view);
+	return std::unique_ptr<v8_inspector::StringBuffer>(v8_inspector::StringBuffer::createRaw(view));
 }
 	
 class V8NodeInspector;
@@ -199,7 +199,7 @@ public:
 		: agent_(agent),
 		waiting_for_resume_(false),
 		running_nested_loop_(false),
-		inspector_(V8Inspector::create(agent->isolate_, this)) {		
+		inspector_(V8Inspector::createRaw(agent->isolate_, this)) {		
 	}
 
   void setupContext(v8::Local<v8::Context> context, const char* context_name /*must be null terminated*/) {
@@ -392,7 +392,7 @@ void AgentImpl::WaitForDisconnect() {
 		shutting_down_ = true;
 		// Gives a signal to stop accepting new connections
 		// TODO(eugeneo): Introduce an API with explicit request names.
-		Write(0, v8_inspector::StringBuffer::create(v8_inspector::StringView()));
+		Write(0, std::unique_ptr<v8_inspector::StringBuffer>(v8_inspector::StringBuffer::createRaw((v8_inspector::StringView()))));
 		fprintf(stderr, "Waiting for the debugger to disconnect...\n");
 		fflush(stderr);
 		inspector_->runMessageLoopOnPause(0);
@@ -402,13 +402,13 @@ void AgentImpl::WaitForDisconnect() {
 std::unique_ptr<v8_inspector::StringBuffer> ToProtocolString(v8::Local<v8::Value> value) {
 	if (value.IsEmpty() || value->IsNull() || value->IsUndefined() ||
 		!value->IsString()) {
-		return v8_inspector::StringBuffer::create(v8_inspector::StringView());
+		return std::unique_ptr<v8_inspector::StringBuffer>(v8_inspector::StringBuffer::createRaw(v8_inspector::StringView()));
 	}
 	v8::Local<v8::String> string_value = v8::Local<v8::String>::Cast(value);
 	size_t len = string_value->Length();
 	std::basic_string<uint16_t> buffer(len, '\0');
-	string_value->Write(&buffer[0], 0, len);
-	return v8_inspector::StringBuffer::create(v8_inspector::StringView(buffer.data(), len));
+	string_value->Write(v8::Isolate::GetCurrent(), &buffer[0], 0, len);
+	return std::unique_ptr<v8_inspector::StringBuffer>(v8_inspector::StringBuffer::createRaw(v8_inspector::StringView(buffer.data(), len)));
 }
 
 void AgentImpl::FatalException(v8::Local<v8::Value> error,
@@ -424,7 +424,7 @@ void AgentImpl::FatalException(v8::Local<v8::Value> error,
 
 	if (!stack_trace.IsEmpty() &&
 		stack_trace->GetFrameCount() > 0 &&
-		script_id == stack_trace->GetFrame(0)->GetScriptId()) {
+		script_id == stack_trace->GetFrame(v8::Isolate::GetCurrent(), 0)->GetScriptId()) {
 		script_id = 0;
 	}
 

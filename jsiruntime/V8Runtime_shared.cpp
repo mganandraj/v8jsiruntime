@@ -136,7 +136,7 @@ V8Runtime::V8Runtime(V8RuntimeArgs&& args)
   v8::Local<v8::ObjectTemplate> hostObjectTemplate = constructorForHostObjectTemplate->InstanceTemplate();
   hostObjectTemplate->SetHandler(v8::NamedPropertyHandlerConfiguration(HostObjectProxy::Get, HostObjectProxy::Set, nullptr, nullptr, HostObjectProxy::Enumerator));
   hostObjectTemplate->SetInternalFieldCount(1);
-  hostObjectConstructor_.Reset(isolate_, constructorForHostObjectTemplate->GetFunction());
+  hostObjectConstructor_.Reset(isolate_, constructorForHostObjectTemplate->GetFunction(context_.Get(isolate_)).ToLocalChecked());
 }
 
 V8Runtime::~V8Runtime() {
@@ -162,14 +162,14 @@ V8Runtime::~V8Runtime() {
   }
 }
 
-void V8Runtime::evaluateJavaScript(
-  std::unique_ptr<const jsi::Buffer> buffer,
-  const std::string& sourceURL) {
+jsi::Value V8Runtime::evaluateJavaScript(
+	const std::shared_ptr<const jsi::Buffer>& buffer,
+	const std::string& sourceURL) {
 
   _ISOLATE_CONTEXT_ENTER
 
   // TODO :: assert if not one byte.
-  ExternalOwningOneByteStringResource* external_string_resource = new ExternalOwningOneByteStringResource(std::move(buffer));
+  ExternalOwningOneByteStringResource* external_string_resource = new ExternalOwningOneByteStringResource(buffer);
   v8::Local<v8::String> sourceV8String;
   if (!v8::String::NewExternalOneByte(isolate, external_string_resource).ToLocal(&sourceV8String)) {
     // fallback.
@@ -186,7 +186,7 @@ void V8Runtime::evaluateJavaScript(
     ExecuteString(sourceV8String, cache.get(), urlV8String, true);
   } else {
   */  
-  ExecuteString(sourceV8String, sourceURL);
+  return ExecuteString(sourceV8String, sourceURL);
   //}
 }
 
@@ -205,7 +205,7 @@ v8::Local<v8::Script> V8Runtime::GetCompiledScript(const v8::Local<v8::String> &
 }
 
 
-bool V8Runtime::ExecuteString(const v8::Local<v8::String>& source, const std::string& sourceURL) {
+jsi::Value V8Runtime::ExecuteString(const v8::Local<v8::String>& source, const std::string& sourceURL) {
   _ISOLATE_CONTEXT_ENTER
 
   v8::TryCatch try_catch(isolate);
@@ -217,7 +217,7 @@ bool V8Runtime::ExecuteString(const v8::Local<v8::String>& source, const std::st
     assert(try_catch.HasCaught());
     // Print errors that happened during execution.
     ReportException(&try_catch);
-    return false;
+	return createValue(v8::Undefined(GetIsolate()));
   }
   else {
     assert(!try_catch.HasCaught());
@@ -228,21 +228,46 @@ bool V8Runtime::ExecuteString(const v8::Local<v8::String>& source, const std::st
       const char* cstr = ToCString(str);
       printf("%s\n", cstr);
     }
-    return true;
+    return createValue(result);;
   }
 }
 
+// The callback that is invoked by v8 whenever the JavaScript 'print'
+// function is called.  Prints its arguments on stdout separated by
+// spaces and ending with a newline.
+void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	bool first = true;
+	for (int i = 0; i < args.Length(); i++) {
+		v8::HandleScope handle_scope(args.GetIsolate());
+		if (first) {
+			first = false;
+		}
+		else {
+			printf(" ");
+		}
+		v8::String::Utf8Value str(args.GetIsolate(), args[i]);
+		const char* cstr = ToCString(str);
+		printf("%s", cstr);
+	}
+	printf("\n");
+	fflush(stdout);
+}
 
 v8::Local<v8::Context> V8Runtime::CreateContext(v8::Isolate* isolate) {
   // Create a template for the global object.
   v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
+
+  global->Set(
+	  v8::String::NewFromUtf8(isolate, "print", v8::NewStringType::kNormal)
+	  .ToLocalChecked(),
+	  v8::FunctionTemplate::New(isolate, Print));
 
   v8::Local<v8::Context> context = v8::Context::New(isolate, NULL, global);
   context->SetAlignedPointerInEmbedderData(1, this);
   return context;
 }
 
-bool V8Runtime::ExecuteString(v8::Local<v8::String> source, const jsi::Buffer* cache, v8::Local<v8::Value> name, bool report_exceptions) {
+jsi::Value V8Runtime::ExecuteString(v8::Local<v8::String> source, const jsi::Buffer* cache, v8::Local<v8::Value> name, bool report_exceptions) {
   _ISOLATE_CONTEXT_ENTER
   v8::TryCatch try_catch(isolate);
   v8::ScriptOrigin origin(name);
@@ -262,7 +287,7 @@ bool V8Runtime::ExecuteString(v8::Local<v8::String> source, const jsi::Buffer* c
     // Print errors that happened during compilation.
     if (report_exceptions)
       ReportException(&try_catch);
-    return false;
+	return createValue(v8::Undefined(GetIsolate()));
   }
   else {
     v8::Local<v8::Value> result;
@@ -272,13 +297,21 @@ bool V8Runtime::ExecuteString(v8::Local<v8::String> source, const jsi::Buffer* c
       if (report_exceptions) {
         ReportException(&try_catch);
       }
-      return false;
+	  return createValue(v8::Undefined(GetIsolate()));
     }
     else {
       assert(!try_catch.HasCaught());
-      return true;
+	  return createValue(result);
     }
   }
+}
+
+std::shared_ptr<const facebook::jsi::PreparedJavaScript>V8Runtime::prepareJavaScript(const std::shared_ptr<const facebook::jsi::Buffer>&, std::string) {
+	throw jsi::JSINativeException("V8Runtime::prepareJavaScript is not implemented!");
+}
+
+facebook::jsi::Value V8Runtime::evaluatePreparedJavaScript(const std::shared_ptr<const facebook::jsi::PreparedJavaScript>&) {
+	throw jsi::JSINativeException("V8Runtime::evaluatePreparedJavaScript is not implemented!");
 }
 
 void V8Runtime::ReportException(v8::TryCatch* try_catch) {
@@ -398,6 +431,14 @@ jsi::Runtime::PointerValue* V8Runtime::clonePropNameID(const jsi::Runtime::Point
   _ISOLATE_CONTEXT_ENTER
   const V8StringValue* string = static_cast<const V8StringValue*>(pv);
   return makeStringValue(string->v8String_.Get(GetIsolate()));
+}
+
+jsi::Runtime::PointerValue* V8Runtime::cloneSymbol(const jsi::Runtime::PointerValue*) {
+	throw jsi::JSINativeException("V8Runtime::cloneSymbol is not implemented!");
+}
+
+std::string V8Runtime::symbolToString(const jsi::Symbol&) {
+	throw jsi::JSINativeException("V8Runtime::symbolToString is not implemented!");
 }
 
 jsi::PropNameID V8Runtime::createPropNameIDFromAscii(const char* str, size_t length) {
@@ -560,7 +601,7 @@ bool V8Runtime::isHostObject(const jsi::Object& obj) const {
 // Very expensive
 jsi::Array V8Runtime::getPropertyNames(const jsi::Object& obj) {
   _ISOLATE_CONTEXT_ENTER
-  v8::Local<v8::Array> propNames = objectRef(obj)->GetPropertyNames();
+  v8::Local<v8::Array> propNames = objectRef(obj)->GetPropertyNames(context_.Get(isolate_)).ToLocalChecked();
   return createObject(propNames).getArray(*this);
 }
 
@@ -667,6 +708,10 @@ bool V8Runtime::strictEquals(const jsi::Object& a, const jsi::Object& b) const {
   return objectRef(a)->StrictEquals(objectRef(b));
 }
 
+bool V8Runtime::strictEquals(const jsi::Symbol&, const jsi::Symbol&) const {
+	throw jsi::JSINativeException("Not implemented!");
+}
+
 bool V8Runtime::instanceOf(const jsi::Object& o, const jsi::Function& f) {
   _ISOLATE_CONTEXT_ENTER
   return objectRef(o)->InstanceOf(GetIsolate()->GetCurrentContext(), objectRef(f)).ToChecked();
@@ -703,7 +748,7 @@ jsi::Value V8Runtime::createValue(v8::Local<v8::Value> value) const {
     return jsi::Value(value->NumberValue(GetIsolate()->GetCurrentContext()).ToChecked());
   }
   else if (value->IsBoolean()) {
-    return jsi::Value(value->BooleanValue(GetIsolate()->GetCurrentContext()).ToChecked());
+    return jsi::Value(value->BooleanValue(GetIsolate()));
   }
   else if (value.IsEmpty() || value->IsNull()) {
     return jsi::Value(nullptr);
