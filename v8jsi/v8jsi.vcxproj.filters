@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Header Files\jsi">
+      <UniqueIdentifier>{a228427c-25b0-4024-b7d8-42032a847178}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\inspector">
+      <UniqueIdentifier>{28d63d5e-ccac-43fc-98a0-a20c9f34c623}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\inspector">
+      <UniqueIdentifier>{0fde2fb1-035e-4459-8312-8d39390d5f9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\jsi">
+      <UniqueIdentifier>{3e960d24-6ff6-478c-92db-b4e71283f2a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\jsiruntime">
+      <UniqueIdentifier>{b01df425-f8b2-4464-8332-25b0739741e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\jsiruntime">
+      <UniqueIdentifier>{9ed059ee-543e-438d-a640-2a1a092cb125}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="jsi\jsi.cpp">
+      <Filter>Source Files\jsi</Filter>
+    </ClCompile>
+    <ClCompile Include="jsi\jsilib-windows.cpp">
+      <Filter>Source Files\jsi</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\V8Platform.cpp">
+      <Filter>Source Files\jsiruntime</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_agent.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_socket.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_socket_server.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_tcp.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_utils.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\llhttp.c">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\llhttp_api.c">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\llhttp_http.c">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jsiruntime\V8JsiRuntime_shared.cpp">
+      <Filter>Source Files\jsiruntime</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inspector\targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\decorator.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\instrumentation.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\jsi.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\JSIDynamic.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\jsi-inl.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\jsilib.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\RuntimeHolder.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\ScriptStore.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="jsi\threadsafe.h">
+      <Filter>Header Files\jsi</Filter>
+    </ClInclude>
+    <ClInclude Include="inspector\inspector_agent.h">
+      <Filter>Header Files\inspector</Filter>
+    </ClInclude>
+    <ClInclude Include="inspector\inspector_socket.h">
+      <Filter>Header Files\inspector</Filter>
+    </ClInclude>
+    <ClInclude Include="inspector\inspector_socket_server.h">
+      <Filter>Header Files\inspector</Filter>
+    </ClInclude>
+    <ClInclude Include="inspector\inspector_tcp.h">
+      <Filter>Header Files\inspector</Filter>
+    </ClInclude>
+    <ClInclude Include="inspector\inspector_utils.h">
+      <Filter>Header Files\inspector</Filter>
+    </ClInclude>
+    <ClInclude Include="inspector\llhttp.h">
+      <Filter>Header Files\inspector</Filter>
+    </ClInclude>
+    <ClInclude Include="jsiruntime\TaskRunnerAdapter.h">
+      <Filter>Header Files\jsiruntime</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\V8Platform.h">
+      <Filter>Header Files\jsiruntime</Filter>
+    </ClInclude>
+    <ClInclude Include="jsiruntime\V8JsiRuntime.h">
+      <Filter>Header Files\jsiruntime</Filter>
+    </ClInclude>
+    <ClInclude Include="jsiruntime\V8JsiRuntime_impl.h">
+      <Filter>Header Files\jsiruntime</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

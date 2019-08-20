@@ -62,12 +62,6 @@ Generated Files/
 /target/
 /x64/
 /Debug/
-/Release/
-/test/Release/
-/test/Debug/
-/test/x64/
-/v8jsi/Release/
-/v8jsi/Debug/
 Examples/WindowsSampleApp/Generated Files/
 Examples/WindowsSampleApp/build
 Examples/TypeScript/Generated Files/

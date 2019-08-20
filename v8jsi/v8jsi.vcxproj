@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{8E1FC1DE-A585-47B8-8E9F-64BC9F7D05C7}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <ProjectName>v8jsi</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <V8Root>D:\JS\V8\v8\</V8Root>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludePath>.;$(V8Root)include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(V8Root)out\$(Platform)\$(Configuration)\obj\v8_monolith.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <PreprocessorDefinitions>_ITERATOR_DEBUG_LEVEL=0;_DEBUG%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="inspector\inspector_agent.cpp" />
+    <ClCompile Include="inspector\inspector_socket.cpp" />
+    <ClCompile Include="inspector\inspector_socket_server.cpp" />
+    <ClCompile Include="inspector\inspector_tcp.cpp" />
+    <ClCompile Include="inspector\inspector_utils.cpp" />
+    <ClCompile Include="inspector\llhttp.c" />
+    <ClCompile Include="inspector\llhttp_api.c" />
+    <ClCompile Include="inspector\llhttp_http.c" />
+    <ClCompile Include="jsiruntime\V8JsiRuntime_shared.cpp" />
+    <ClCompile Include="jsi\jsi.cpp" />
+    <ClCompile Include="jsi\jsilib-windows.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="platform\V8Platform.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inspector\inspector_agent.h" />
+    <ClInclude Include="inspector\inspector_socket.h" />
+    <ClInclude Include="inspector\inspector_socket_server.h" />
+    <ClInclude Include="inspector\inspector_tcp.h" />
+    <ClInclude Include="inspector\inspector_utils.h" />
+    <ClInclude Include="inspector\llhttp.h" />
+    <ClInclude Include="inspector\targetver.h" />
+    <ClInclude Include="jsiruntime\TaskRunnerAdapter.h" />
+    <ClInclude Include="jsiruntime\V8JsiRuntime.h" />
+    <ClInclude Include="jsiruntime\V8JsiRuntime_impl.h" />
+    <ClInclude Include="jsi\decorator.h" />
+    <ClInclude Include="jsi\instrumentation.h" />
+    <ClInclude Include="jsi\jsi-inl.h" />
+    <ClInclude Include="jsi\jsi.h" />
+    <ClInclude Include="jsi\JSIDynamic.h" />
+    <ClInclude Include="jsi\jsilib.h" />
+    <ClInclude Include="jsi\RuntimeHolder.h" />
+    <ClInclude Include="jsi\ScriptStore.h" />
+    <ClInclude Include="jsi\threadsafe.h" />
+    <ClInclude Include="platform\V8Platform.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
