@@ -31,6 +31,9 @@
     <Filter Include="Header Files\jsiruntime">
       <UniqueIdentifier>{9ed059ee-543e-438d-a640-2a1a092cb125}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\etw">
+      <UniqueIdentifier>{00893b5e-9183-4968-9279-2623c890cc63}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="jsi\jsi.cpp">
@@ -41,30 +44,6 @@
     </ClCompile>
     <ClCompile Include="platform\V8Platform.cpp">
       <Filter>Source Files\jsiruntime</Filter>
-    </ClCompile>
-    <ClCompile Include="inspector\inspector_agent.cpp">
-      <Filter>Source Files\inspector</Filter>
-    </ClCompile>
-    <ClCompile Include="inspector\inspector_socket.cpp">
-      <Filter>Source Files\inspector</Filter>
-    </ClCompile>
-    <ClCompile Include="inspector\inspector_socket_server.cpp">
-      <Filter>Source Files\inspector</Filter>
-    </ClCompile>
-    <ClCompile Include="inspector\inspector_tcp.cpp">
-      <Filter>Source Files\inspector</Filter>
-    </ClCompile>
-    <ClCompile Include="inspector\inspector_utils.cpp">
-      <Filter>Source Files\inspector</Filter>
-    </ClCompile>
-    <ClCompile Include="inspector\llhttp.c">
-      <Filter>Source Files\inspector</Filter>
-    </ClCompile>
-    <ClCompile Include="inspector\llhttp_api.c">
-      <Filter>Source Files\inspector</Filter>
-    </ClCompile>
-    <ClCompile Include="inspector\llhttp_http.c">
-      <Filter>Source Files\inspector</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
@@ -134,5 +113,13 @@
     <ClInclude Include="jsiruntime\V8JsiRuntime_impl.h">
       <Filter>Header Files\jsiruntime</Filter>
     </ClInclude>
+    <ClInclude Include="etw\v8jsiruntime.h">
+      <Filter>Source Files\etw</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="etw\v8jsiruntime.man">
+      <Filter>Source Files\etw</Filter>
+    </None>
   </ItemGroup>
 </Project>

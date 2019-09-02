@@ -175,6 +175,7 @@ ScriptHost::ScriptHost() {
 
   jsiTaskRunner_->PostTask(std::make_unique<FunctionTask>([this]() {
     v8runtime::V8RuntimeArgs args{};
+	args.liteMode = true;
     auto tr = new MyTaskRunnerAdapter(jsiTaskRunner_);
     args.foreground_task_runner = std::unique_ptr<MyTaskRunnerAdapter>(tr);
     runtime_ = v8runtime::makeV8Runtime(std::move(args));
