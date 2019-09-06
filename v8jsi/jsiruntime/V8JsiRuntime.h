@@ -86,7 +86,17 @@ struct V8RuntimeArgs {
 
   bool liteMode{false};
 
-  bool trackGCObjectStats{true};
+  bool trackGCObjectStats{false};
+
+  bool backgroundMode{false};
+
+  bool enableTracing{false};
+  bool enableJitTracing{false};
+  bool enableMessageTracing{true};
+  bool enableLog{true};
+
+  size_t initial_heap_size_in_bytes{0};
+  size_t maximum_heap_size_in_bytes{0};
 };
 
 __declspec(dllexport)

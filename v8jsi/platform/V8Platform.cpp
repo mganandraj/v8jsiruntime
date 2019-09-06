@@ -20,7 +20,7 @@ namespace v8runtime {
 
 const uint8_t *ETWTracingController::GetCategoryGroupEnabled(
     const char *category_group) {
-  static uint8_t value = 1;
+  static uint8_t value = enabled_ ? 1 : 0;
   return &value;
 }
 
@@ -162,7 +162,7 @@ void ETWTracingController::RemoveTraceStateObserver(
     v8::TracingController::TraceStateObserver *observer) {}
 
 /*static*/ V8Platform &V8Platform::Get() {
-  static V8Platform platform;
+  static V8Platform platform(false);
   return platform;
 }
 
@@ -300,8 +300,9 @@ void WorkerThreadsTaskRunner::TimerFunc() {
 //  // queue_->runOnQueue([s_task2=std::move(s_task)]() { s_task2->Run(); });
 //}
 
-V8Platform::V8Platform()
-    : tracing_controller_(std::make_unique<ETWTracingController>()),
+V8Platform::V8Platform(bool enable_tracing)
+    : tracing_controller_(
+          std::make_unique<ETWTracingController>(enable_tracing)),
       worker_task_runner_(std::make_unique<WorkerThreadsTaskRunner>()) {}
 
 V8Platform::~V8Platform() {}
@@ -338,7 +339,9 @@ void V8Platform::CallDelayedOnForegroundThread(
 void V8Platform::CallIdleOnForegroundThread(
     v8::Isolate *isolate,
     v8::IdleTask *task) {
-  std::abort();
+  // std::abort();
+  GetForegroundTaskRunner(isolate)->PostIdleTask(
+      std::unique_ptr<v8::IdleTask>(task));
 }
 
 bool V8Platform::IdleTasksEnabled(v8::Isolate *isolate) {

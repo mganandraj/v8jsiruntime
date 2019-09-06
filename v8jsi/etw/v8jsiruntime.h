@@ -547,7 +547,7 @@ Remarks:
 #endif // MCGEN_DISABLE_PROVIDER_CODE_GENERATION
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Provider "v8jsi-Provider" event count 3
+// Provider "v8jsi-Provider" event count 6
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 // Provider GUID = f5d420d2-9256-431b-b64b-a0e80c097839
@@ -563,6 +563,7 @@ EXTERN_C __declspec(selectany) const GUID V8JSI = {0xf5d420d2, 0x9256, 0x431b, {
 #define GENERIC_V8_OP 0xa
 #define UPDATE_TIMESTAMP_OP 0xb
 #define DUMPT_COUNTERS_OP 0xc
+#define JIT_CODE_EVENT_OP 0xd
 
 //
 // Tasks
@@ -570,6 +571,9 @@ EXTERN_C __declspec(selectany) const GUID V8JSI = {0xf5d420d2, 0x9256, 0x431b, {
 #define V8JSI_TASK_GenericV8Trace 0x1
 #define V8JSI_TASK_UpdateTimestamp 0x2
 #define V8JSI_TASK_DumptCounters 0x3
+#define V8JSI_TASK_JITCodeEvent 0x4
+#define V8JSI_TASK_Message 0x5
+#define V8JSI_TASK_Log 0x6
 
 //
 // Event Descriptors
@@ -580,6 +584,12 @@ EXTERN_C __declspec(selectany) const EVENT_DESCRIPTOR UPDATE_TIMESTAMP = {0x2, 0
 #define UPDATE_TIMESTAMP_value 0x2
 EXTERN_C __declspec(selectany) const EVENT_DESCRIPTOR DUMPT_COUNTERS = {0x3, 0x0, 0x0, 0x4, 0xc, 0x3, 0x0};
 #define DUMPT_COUNTERS_value 0x3
+EXTERN_C __declspec(selectany) const EVENT_DESCRIPTOR JIT_CODE_EVENT = {0x4, 0x0, 0x0, 0x4, 0xd, 0x4, 0x0};
+#define JIT_CODE_EVENT_value 0x4
+EXTERN_C __declspec(selectany) const EVENT_DESCRIPTOR MESSAGE = {0x5, 0x0, 0x0, 0x4, 0x0, 0x5, 0x0};
+#define MESSAGE_value 0x5
+EXTERN_C __declspec(selectany) const EVENT_DESCRIPTOR V8JSI_LOG = {0x6, 0x0, 0x0, 0x4, 0x0, 0x6, 0x0};
+#define V8JSI_LOG_value 0x6
 
 //
 // MCGEN_DISABLE_PROVIDER_CODE_GENERATION macro:
@@ -680,11 +690,53 @@ EXTERN_C __declspec(selectany) MCGEN_TRACE_CONTEXT V8JSI_Context = {0, (ULONG_PT
 //
 // Event write macros for DUMPT_COUNTERS
 //
-#define EventWriteDUMPT_COUNTERS(when, name, count, sample_total, is_histogram) \
+#define EventWriteDUMPT_COUNTERS(when, cookie, name, count, sample_total, is_histogram) \
         MCGEN_EVENT_ENABLED(DUMPT_COUNTERS) \
-        ? McTemplateU0ssddt(&V8JSI_Context, &DUMPT_COUNTERS, when, name, count, sample_total, is_histogram) : 0
-#define EventWriteDUMPT_COUNTERS_AssumeEnabled(when, name, count, sample_total, is_histogram) \
-        McTemplateU0ssddt(&V8JSI_Context, &DUMPT_COUNTERS, when, name, count, sample_total, is_histogram)
+        ? McTemplateU0sqsddt(&V8JSI_Context, &DUMPT_COUNTERS, when, cookie, name, count, sample_total, is_histogram) : 0
+#define EventWriteDUMPT_COUNTERS_AssumeEnabled(when, cookie, name, count, sample_total, is_histogram) \
+        McTemplateU0sqsddt(&V8JSI_Context, &DUMPT_COUNTERS, when, cookie, name, count, sample_total, is_histogram)
+
+//
+// Enablement check macro for JIT_CODE_EVENT
+//
+#define EventEnabledJIT_CODE_EVENT() MCGEN_EVENT_BIT_SET(v8jsi_ProviderEnableBits, 0)
+
+//
+// Event write macros for JIT_CODE_EVENT
+//
+#define EventWriteJIT_CODE_EVENT(eventType, codeType, name, code_details) \
+        MCGEN_EVENT_ENABLED(JIT_CODE_EVENT) \
+        ? McTemplateU0uuss(&V8JSI_Context, &JIT_CODE_EVENT, eventType, codeType, name, code_details) : 0
+#define EventWriteJIT_CODE_EVENT_AssumeEnabled(eventType, codeType, name, code_details) \
+        McTemplateU0uuss(&V8JSI_Context, &JIT_CODE_EVENT, eventType, codeType, name, code_details)
+
+//
+// Enablement check macro for MESSAGE
+//
+#define EventEnabledMESSAGE() MCGEN_EVENT_BIT_SET(v8jsi_ProviderEnableBits, 0)
+
+//
+// Event write macros for MESSAGE
+//
+#define EventWriteMESSAGE(message, source_line, stack_trace, line_number, start_position, end_position, error_level, start_column, end_column) \
+        MCGEN_EVENT_ENABLED(MESSAGE) \
+        ? McTemplateU0sssdddddd(&V8JSI_Context, &MESSAGE, message, source_line, stack_trace, line_number, start_position, end_position, error_level, start_column, end_column) : 0
+#define EventWriteMESSAGE_AssumeEnabled(message, source_line, stack_trace, line_number, start_position, end_position, error_level, start_column, end_column) \
+        McTemplateU0sssdddddd(&V8JSI_Context, &MESSAGE, message, source_line, stack_trace, line_number, start_position, end_position, error_level, start_column, end_column)
+
+//
+// Enablement check macro for V8JSI_LOG
+//
+#define EventEnabledV8JSI_LOG() MCGEN_EVENT_BIT_SET(v8jsi_ProviderEnableBits, 0)
+
+//
+// Event write macros for V8JSI_LOG
+//
+#define EventWriteV8JSI_LOG(message1, message2, message3, message4) \
+        MCGEN_EVENT_ENABLED(V8JSI_LOG) \
+        ? McTemplateU0ssss(&V8JSI_Context, &V8JSI_LOG, message1, message2, message3, message4) : 0
+#define EventWriteV8JSI_LOG_AssumeEnabled(message1, message2, message3, message4) \
+        McTemplateU0ssss(&V8JSI_Context, &V8JSI_LOG, message1, message2, message3, message4)
 
 #endif // MCGEN_DISABLE_PROVIDER_CODE_GENERATION
 
@@ -701,23 +753,69 @@ EXTERN_C __declspec(selectany) MCGEN_TRACE_CONTEXT V8JSI_Context = {0, (ULONG_PT
 //
 //Template from manifest : tidCounter
 //
-#ifndef McTemplateU0ssddt_def
-#define McTemplateU0ssddt_def
+#ifndef McTemplateU0sqsddt_def
+#define McTemplateU0sqsddt_def
 ETW_INLINE
 ULONG
-McTemplateU0ssddt(
+McTemplateU0sqsddt(
+    _In_ PMCGEN_TRACE_CONTEXT Context,
+    _In_ PCEVENT_DESCRIPTOR Descriptor,
+    _In_opt_ PCSTR  _Arg0,
+    _In_ const unsigned int  _Arg1,
+    _In_opt_ PCSTR  _Arg2,
+    _In_ const signed int  _Arg3,
+    _In_ const signed int  _Arg4,
+    _In_ const signed int  _Arg5
+    )
+{
+#define McTemplateU0sqsddt_ARGCOUNT 6
+
+    EVENT_DATA_DESCRIPTOR EventData[McTemplateU0sqsddt_ARGCOUNT + 1];
+
+    EventDataDescCreate(&EventData[1],
+                        (_Arg0 != NULL) ? _Arg0 : "NULL",
+                        (_Arg0 != NULL) ? (ULONG)((strlen(_Arg0) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
+
+    EventDataDescCreate(&EventData[2],&_Arg1, sizeof(const unsigned int)  );
+
+    EventDataDescCreate(&EventData[3],
+                        (_Arg2 != NULL) ? _Arg2 : "NULL",
+                        (_Arg2 != NULL) ? (ULONG)((strlen(_Arg2) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
+
+    EventDataDescCreate(&EventData[4],&_Arg3, sizeof(const signed int)  );
+
+    EventDataDescCreate(&EventData[5],&_Arg4, sizeof(const signed int)  );
+
+    EventDataDescCreate(&EventData[6],&_Arg5, sizeof(const signed int)  );
+
+    return McGenEventWrite(Context, Descriptor, NULL, McTemplateU0sqsddt_ARGCOUNT + 1, EventData);
+}
+#endif // McTemplateU0sqsddt_def
+
+//
+//Template from manifest : tidMessage
+//
+#ifndef McTemplateU0sssdddddd_def
+#define McTemplateU0sssdddddd_def
+ETW_INLINE
+ULONG
+McTemplateU0sssdddddd(
     _In_ PMCGEN_TRACE_CONTEXT Context,
     _In_ PCEVENT_DESCRIPTOR Descriptor,
     _In_opt_ PCSTR  _Arg0,
     _In_opt_ PCSTR  _Arg1,
-    _In_ const signed int  _Arg2,
+    _In_opt_ PCSTR  _Arg2,
     _In_ const signed int  _Arg3,
-    _In_ const signed int  _Arg4
+    _In_ const signed int  _Arg4,
+    _In_ const signed int  _Arg5,
+    _In_ const signed int  _Arg6,
+    _In_ const signed int  _Arg7,
+    _In_ const signed int  _Arg8
     )
 {
-#define McTemplateU0ssddt_ARGCOUNT 5
+#define McTemplateU0sssdddddd_ARGCOUNT 9
 
-    EVENT_DATA_DESCRIPTOR EventData[McTemplateU0ssddt_ARGCOUNT + 1];
+    EVENT_DATA_DESCRIPTOR EventData[McTemplateU0sssdddddd_ARGCOUNT + 1];
 
     EventDataDescCreate(&EventData[1],
                         (_Arg0 != NULL) ? _Arg0 : "NULL",
@@ -727,15 +825,65 @@ McTemplateU0ssddt(
                         (_Arg1 != NULL) ? _Arg1 : "NULL",
                         (_Arg1 != NULL) ? (ULONG)((strlen(_Arg1) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
 
-    EventDataDescCreate(&EventData[3],&_Arg2, sizeof(const signed int)  );
+    EventDataDescCreate(&EventData[3],
+                        (_Arg2 != NULL) ? _Arg2 : "NULL",
+                        (_Arg2 != NULL) ? (ULONG)((strlen(_Arg2) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
 
     EventDataDescCreate(&EventData[4],&_Arg3, sizeof(const signed int)  );
 
     EventDataDescCreate(&EventData[5],&_Arg4, sizeof(const signed int)  );
 
-    return McGenEventWrite(Context, Descriptor, NULL, McTemplateU0ssddt_ARGCOUNT + 1, EventData);
+    EventDataDescCreate(&EventData[6],&_Arg5, sizeof(const signed int)  );
+
+    EventDataDescCreate(&EventData[7],&_Arg6, sizeof(const signed int)  );
+
+    EventDataDescCreate(&EventData[8],&_Arg7, sizeof(const signed int)  );
+
+    EventDataDescCreate(&EventData[9],&_Arg8, sizeof(const signed int)  );
+
+    return McGenEventWrite(Context, Descriptor, NULL, McTemplateU0sssdddddd_ARGCOUNT + 1, EventData);
 }
-#endif // McTemplateU0ssddt_def
+#endif // McTemplateU0sssdddddd_def
+
+//
+//Template from manifest : tidLog
+//
+#ifndef McTemplateU0ssss_def
+#define McTemplateU0ssss_def
+ETW_INLINE
+ULONG
+McTemplateU0ssss(
+    _In_ PMCGEN_TRACE_CONTEXT Context,
+    _In_ PCEVENT_DESCRIPTOR Descriptor,
+    _In_opt_ PCSTR  _Arg0,
+    _In_opt_ PCSTR  _Arg1,
+    _In_opt_ PCSTR  _Arg2,
+    _In_opt_ PCSTR  _Arg3
+    )
+{
+#define McTemplateU0ssss_ARGCOUNT 4
+
+    EVENT_DATA_DESCRIPTOR EventData[McTemplateU0ssss_ARGCOUNT + 1];
+
+    EventDataDescCreate(&EventData[1],
+                        (_Arg0 != NULL) ? _Arg0 : "NULL",
+                        (_Arg0 != NULL) ? (ULONG)((strlen(_Arg0) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
+
+    EventDataDescCreate(&EventData[2],
+                        (_Arg1 != NULL) ? _Arg1 : "NULL",
+                        (_Arg1 != NULL) ? (ULONG)((strlen(_Arg1) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
+
+    EventDataDescCreate(&EventData[3],
+                        (_Arg2 != NULL) ? _Arg2 : "NULL",
+                        (_Arg2 != NULL) ? (ULONG)((strlen(_Arg2) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
+
+    EventDataDescCreate(&EventData[4],
+                        (_Arg3 != NULL) ? _Arg3 : "NULL",
+                        (_Arg3 != NULL) ? (ULONG)((strlen(_Arg3) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
+
+    return McGenEventWrite(Context, Descriptor, NULL, McTemplateU0ssss_ARGCOUNT + 1, EventData);
+}
+#endif // McTemplateU0ssss_def
 
 //
 //Template from manifest : tidUpdateTimestamp
@@ -894,6 +1042,42 @@ McTemplateU0usxsxxsuxsuxsuxsuxsuxsuxsuxsux(
     return McGenEventWrite(Context, Descriptor, NULL, McTemplateU0usxsxxsuxsuxsuxsuxsuxsuxsuxsux_ARGCOUNT + 1, EventData);
 }
 #endif // McTemplateU0usxsxxsuxsuxsuxsuxsuxsuxsuxsux_def
+
+//
+//Template from manifest : tidJitCodeEvent
+//
+#ifndef McTemplateU0uuss_def
+#define McTemplateU0uuss_def
+ETW_INLINE
+ULONG
+McTemplateU0uuss(
+    _In_ PMCGEN_TRACE_CONTEXT Context,
+    _In_ PCEVENT_DESCRIPTOR Descriptor,
+    _In_ const unsigned char  _Arg0,
+    _In_ const unsigned char  _Arg1,
+    _In_opt_ PCSTR  _Arg2,
+    _In_opt_ PCSTR  _Arg3
+    )
+{
+#define McTemplateU0uuss_ARGCOUNT 4
+
+    EVENT_DATA_DESCRIPTOR EventData[McTemplateU0uuss_ARGCOUNT + 1];
+
+    EventDataDescCreate(&EventData[1],&_Arg0, sizeof(const unsigned char)  );
+
+    EventDataDescCreate(&EventData[2],&_Arg1, sizeof(const unsigned char)  );
+
+    EventDataDescCreate(&EventData[3],
+                        (_Arg2 != NULL) ? _Arg2 : "NULL",
+                        (_Arg2 != NULL) ? (ULONG)((strlen(_Arg2) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
+
+    EventDataDescCreate(&EventData[4],
+                        (_Arg3 != NULL) ? _Arg3 : "NULL",
+                        (_Arg3 != NULL) ? (ULONG)((strlen(_Arg3) + 1) * sizeof(char)) : (ULONG)sizeof("NULL"));
+
+    return McGenEventWrite(Context, Descriptor, NULL, McTemplateU0uuss_ARGCOUNT + 1, EventData);
+}
+#endif // McTemplateU0uuss_def
 
 #endif // MCGEN_DISABLE_PROVIDER_CODE_GENERATION
 

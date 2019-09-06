@@ -407,6 +407,10 @@ private:
 void AddHostObjectLifetimeTracker(std::shared_ptr<HostObjectLifetimeTracker> hostObjectLifetimeTracker);
 
 static void CDECL OnMessage(v8::Local<v8::Message> message, v8::Local<v8::Value> error);
+static size_t NearHeapLimitCallback(
+    void *raw_state,
+    size_t current_heap_limit,
+    size_t initial_heap_limit);
 
 V8RuntimeArgs& runtimeArgs() {
   return args_;
@@ -490,6 +494,7 @@ private:
   static CounterCollection* counters_;
   static char counters_file_[sizeof(CounterCollection)];
 
+  static void JitCodeEventListener(const v8::JitCodeEvent *event);
 
   const v8::Platform* platform_;
   v8::StartupData custom_snapshot_startup_data_;

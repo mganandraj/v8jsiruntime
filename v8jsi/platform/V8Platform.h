@@ -23,7 +23,7 @@ namespace v8runtime {
 
 class ETWTracingController : public v8::TracingController {
  public:
-  ETWTracingController() = default;
+  ETWTracingController(bool enabled) : enabled_(enabled) {}
   ~ETWTracingController() = default;
 
   const uint8_t *GetCategoryGroupEnabled(const char *category_group) override;
@@ -72,6 +72,8 @@ class ETWTracingController : public v8::TracingController {
   // Disallow copy and assign
   ETWTracingController(const ETWTracingController &) = delete;
   void operator=(const ETWTracingController &) = delete;
+
+  bool enabled_;
 };
 
 // class ForegroundTaskRunner : public v8::TaskRunner {
@@ -157,7 +159,7 @@ class WorkerThreadsTaskRunner : public v8::TaskRunner {
 
 class V8Platform : public v8::Platform {
  public:
-  explicit V8Platform();
+  explicit V8Platform(bool enable_tracing);
   ~V8Platform() override;
 
   int NumberOfWorkerThreads() override;

@@ -16,8 +16,7 @@
 #include <sstream>
 
 #include <windows.h>
-#include <etw\v8jsiruntime.h>
-
+#include "etw\v8jsiruntime.h"
 
 using namespace facebook;
 
@@ -65,29 +64,59 @@ void V8Runtime::AddHostObjectLifetimeTracker(
 /*static */ void V8Runtime::OnMessage(
     v8::Local<v8::Message> message,
     v8::Local<v8::Value> error) {
-  v8::Isolate *isolate = v8::Isolate::GetCurrent();
-  IsolateData *isolateData =
-      reinterpret_cast<IsolateData *>(isolate->GetData(ISOLATE_DATA_SLOT));
-  V8Runtime *runtime = reinterpret_cast<V8Runtime *>(isolateData->runtime_);
 
-  v8::String::Utf8Value filename(
-      isolate, message->GetScriptOrigin().ResourceName());
-  // (filename):(line) (message)
-  std::stringstream warning;
-  warning << *filename;
-  warning << ":";
-  warning << message->GetLineNumber(isolate->GetCurrentContext()).FromMaybe(-1);
-  warning << " ";
-  v8::String::Utf8Value msg(isolate, message->Get());
-  warning << *msg;
+	v8::Isolate *isolate = v8::Isolate::GetCurrent();
 
-  // Note :: The log levels don't match with react native definitions.
-  // (*(runtime->runtimeArgs().logger))(warning.str(), message->ErrorLevel());
+	v8::String::Utf8Value msg(isolate, message->Get());
+        v8::String::Utf8Value source_line(
+            isolate,
+            message->GetSourceLine(isolate->GetCurrentContext())
+                .ToLocalChecked());
 
-  if (message->ErrorLevel() == v8::Isolate::MessageErrorLevel::kMessageError) {
-    std::abort();
-  }
+	EventWriteMESSAGE(
+            *msg,
+            *source_line,
+            "",
+            message->GetLineNumber(isolate->GetCurrentContext()).ToChecked(),
+            message->GetStartPosition(),
+            message->GetEndPosition(),
+            message->ErrorLevel(),
+            message->GetStartColumn(),
+            message->GetEndColumn());
+		
+  //IsolateData *isolateData =
+  //    reinterpret_cast<IsolateData *>(isolate->GetData(ISOLATE_DATA_SLOT));
+  //V8Runtime *runtime = reinterpret_cast<V8Runtime *>(isolateData->runtime_);
+
+  //v8::String::Utf8Value filename(
+  //    isolate, message->GetScriptOrigin().ResourceName());
+  //// (filename):(line) (message)
+  //std::stringstream warning;
+  //warning << *filename;
+  //warning << ":";
+  //warning << message->GetLineNumber(isolate->GetCurrentContext()).FromMaybe(-1);
+  //warning << " ";
+  //v8::String::Utf8Value msg(isolate, message->Get());
+  //warning << *msg;
+
+  //// Note :: The log levels don't match with react native definitions.
+  //// (*(runtime->runtimeArgs().logger))(warning.str(), message->ErrorLevel());
+
+  //if (message->ErrorLevel() == v8::Isolate::MessageErrorLevel::kMessageError) {
+  //  std::abort();
+  //}
 }
+
+size_t V8Runtime::NearHeapLimitCallback(
+    void *raw_state,
+    size_t current_heap_limit,
+    size_t initial_heap_limit) {
+  EventWriteV8JSI_LOG(
+      "NearHeapLimitCallback",
+      std::to_string(current_heap_limit).c_str(),
+      std::to_string(initial_heap_limit).c_str(),
+      "");
+	}
 
 CounterMap *V8Runtime::counter_map_;
 char V8Runtime::counters_file_[sizeof(CounterCollection)];
@@ -122,13 +151,17 @@ Counter *CounterCollection::GetNextCounter() {
 }
 
 void V8Runtime::DumpCounters(const char *when) {
+  static int cookie = 0;
+  cookie++;
   for (std::pair<std::string, Counter *> element : *counter_map_) {
-    EventWriteDUMPT_COUNTERS(
-		when,
-        element.first.c_str(),
-        element.second->count(),
-        element.second->sample_total(),
-        element.second->is_histogram());
+    if (element.second->count() > 0)
+      EventWriteDUMPT_COUNTERS(
+          when,
+		  cookie,
+          element.first.c_str(),
+          element.second->count(),
+          element.second->sample_total(),
+          element.second->is_histogram());
   }
 }
 
@@ -185,6 +218,97 @@ void V8Runtime::AddHistogramSample(void *histogram, int sample) {
   counter->AddSample(sample);
 }
 
+// This class is used to record the JITted code position info for JIT
+// code profiling.
+class JITCodeLineInfo {
+ public:
+  JITCodeLineInfo() {}
+
+  void SetPosition(intptr_t pc, int pos) {
+    AddCodeLineInfo(LineNumInfo(pc, pos));
+  }
+
+  struct LineNumInfo {
+    LineNumInfo(intptr_t pc, int pos) : pc_(pc), pos_(pos) {}
+
+    intptr_t pc_;
+    int pos_;
+  };
+
+  std::list<LineNumInfo> *GetLineNumInfo() {
+    return &line_num_info_;
+  }
+
+ private:
+  void AddCodeLineInfo(const LineNumInfo &line_info) {
+    line_num_info_.push_back(line_info);
+  }
+  std::list<LineNumInfo> line_num_info_;
+};
+
+struct SameCodeObjects {
+  bool operator()(void *key1, void *key2) const {
+    return key1 == key2;
+  }
+};
+
+/*static */ void V8Runtime::JitCodeEventListener(
+    const v8::JitCodeEvent *event) {
+  switch (event->type) {
+    case v8::JitCodeEvent::CODE_ADDED:
+      if (event->code_type == v8::JitCodeEvent::CodeType::BYTE_CODE) {
+        std::cout << "B!!";
+	  }
+
+		EventWriteJIT_CODE_EVENT(
+          event->type,
+          event->code_type,
+          std::string(event->name.str, event->name.len).c_str(),
+          "");
+      break;
+
+    case v8::JitCodeEvent::CODE_ADD_LINE_POS_INFO: {
+      JITCodeLineInfo *line_info =
+          reinterpret_cast<JITCodeLineInfo *>(event->user_data);
+      if (line_info != NULL) {
+        line_info->SetPosition(
+            static_cast<intptr_t>(event->line_info.offset),
+            static_cast<int>(event->line_info.pos));
+      }
+      break;
+    }
+    case v8::JitCodeEvent::CODE_START_LINE_INFO_RECORDING: {
+      v8::JitCodeEvent *temp_event = const_cast<v8::JitCodeEvent *>(event);
+      temp_event->user_data = new JITCodeLineInfo();
+      break;
+    }
+    case v8::JitCodeEvent::CODE_END_LINE_INFO_RECORDING: {
+      JITCodeLineInfo *line_info =
+          reinterpret_cast<JITCodeLineInfo *>(event->user_data);
+
+      std::list<JITCodeLineInfo::LineNumInfo> *lineinfos =
+          line_info->GetLineNumInfo();
+
+      std::string code_details;
+
+      std::list<JITCodeLineInfo::LineNumInfo>::iterator iter;
+      int index = 0;
+      for (iter = lineinfos->begin(); iter != lineinfos->end(); iter++) {
+        code_details.append(std::to_string(iter->pc_) + ":");
+        code_details.append(std::to_string(iter->pos_) + ":");
+      }
+
+      EventWriteJIT_CODE_EVENT(
+          event->type, event->code_type, "###", code_details.c_str());
+
+      break;
+    }
+    default:
+      EventWriteJIT_CODE_EVENT(event->type, event->code_type, "~~~", "");
+      break;
+  }
+}
+
 V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
   EventRegisterv8jsi_Provider();
 
@@ -225,6 +349,16 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
   create_params_.array_buffer_allocator =
       v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 
+  if (args_.initial_heap_size_in_bytes > 0 ||
+      args_.maximum_heap_size_in_bytes > 0) {
+	v8::ResourceConstraints constraints;
+    constraints.ConfigureDefaultsFromHeapSize(
+        args_.initial_heap_size_in_bytes, args_.maximum_heap_size_in_bytes);
+
+    create_params_.constraints = constraints;
+  }
+  
+
   counter_map_ = new CounterMap();
   if (args_.trackGCObjectStats) {
     create_params_.counter_lookup_callback = LookupCounter;
@@ -236,8 +370,6 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
   if (isolate_ == nullptr)
     std::abort();
 
-  MapCounters(isolate_, "v8jsi");
-
   auto foreground_task_runner = std::make_shared<TaskRunnerAdapter>(
       std::move(args_.foreground_task_runner));
   isolate_data_ = std::make_unique<v8runtime::IsolateData>(
@@ -246,12 +378,25 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
 
   v8::Isolate::Initialize(isolate_, create_params_);
 
+  MapCounters(isolate_, "v8jsi");
+
+  isolate_->SetJitCodeEventHandler(
+      v8::kJitCodeEventDefault, JitCodeEventListener);
+
+  if (args_.backgroundMode) {
+    isolate_->IsolateInBackgroundNotification();
+  }
+
+  if (args_.enableMessageTracing) {
+    isolate_->AddMessageListener(OnMessage);
+  }
+
   // isolate_->AddMessageListenerWithErrorLevel(OnMessage,
   // v8::Isolate::MessageErrorLevel::kMessageAll);
-  isolate_->AddMessageListenerWithErrorLevel(
-      OnMessage,
-      v8::Isolate::MessageErrorLevel::kMessageError |
-          v8::Isolate::MessageErrorLevel::kMessageWarning);
+  //isolate_->AddMessageListenerWithErrorLevel(
+  //    OnMessage,
+  //    v8::Isolate::MessageErrorLevel::kMessageError |
+  //        v8::Isolate::MessageErrorLevel::kMessageWarning);
 
   // TODO :: Toggle for ship builds.
   isolate_->SetAbortOnUncaughtExceptionCallback(
@@ -343,7 +488,7 @@ jsi::Value V8Runtime::evaluateJavaScript(
   } else {
   */
   jsi::Value result = ExecuteString(sourceV8String, sourceURL);
-  
+
   DumpCounters("evaluateJavaScript completion.");
   return result;
   //}
@@ -1147,7 +1292,7 @@ v8::Local<v8::Object> V8Runtime::objectRef(const jsi::Object &obj) {
 
 std::unique_ptr<jsi::Runtime> makeV8Runtime(V8RuntimeArgs &&args) {
   // TODO :: Push the ownership of the platform to the caller.
-  static V8Platform platform;
+  static V8Platform platform(args.enableTracing);
   static std::atomic_flag is_platform_initialized{false};
   if (!is_platform_initialized.test_and_set(std::memory_order_acquire)) {
     v8::V8::InitializePlatform(static_cast<v8::Platform *>(&platform));

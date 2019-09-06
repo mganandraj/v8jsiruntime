@@ -6,22 +6,53 @@
 				<events>
 					<event symbol="GENERIC_EVENT" value="1" version="0" level="win:Informational" task="GenericV8Trace" opcode="GenericV8Op" template="tidV8Trace"></event>
 					<event symbol="UPDATE_TIMESTAMP" value="2" version="0" level="win:Informational" task="UpdateTimestamp" opcode="UpdateTimestampOp" template="tidUpdateTimestamp"></event>
-          <event symbol="DUMPT_COUNTERS" value="3" version="0" level="win:Informational" task="DumptCounters" opcode="DumpsCountersOp" template="tidCounter"></event>
+					<event symbol="DUMPT_COUNTERS" value="3" version="0" level="win:Informational" task="DumptCounters" opcode="DumpsCountersOp" template="tidCounter"></event>
+					<event symbol="JIT_CODE_EVENT" value="4" version="0" level="win:Informational" task="JITCodeEvent" opcode="JITCodeEventOp" template="tidJitCodeEvent"></event>
+					<event symbol="MESSAGE" value="5" version="0" level="win:Informational" task="Message" template="tidMessage"></event>
+          <event symbol="V8JSI_LOG" value="6" version="0" level="win:Informational" task="Log" template="tidLog"></event>
 				</events>
 				<levels></levels>
 				<tasks>
 					<task name="GenericV8Trace" value="1" eventGUID="{00000000-0000-0000-0000-000000000000}"></task>
 					<task name="UpdateTimestamp" value="2" eventGUID="{00000000-0000-0000-0000-000000000000}"></task>
-          <task name="DumptCounters" value="3" eventGUID="{00000000-0000-0000-0000-000000000000}"></task>
+					<task name="DumptCounters" value="3" eventGUID="{00000000-0000-0000-0000-000000000000}"></task>
+					<task name="JITCodeEvent" value="4" eventGUID="{00000000-0000-0000-0000-000000000000}"></task>
+					<task name="Message" value="5" eventGUID="{00000000-0000-0000-0000-000000000000}"></task>
+          <task name="Log" value="6" eventGUID="{00000000-0000-0000-0000-000000000000}"></task>
 				</tasks>
 				<opcodes>
 					<opcode name="GenericV8Op" symbol="GENERIC_V8_OP" value="10"></opcode>
 					<opcode name="UpdateTimestampOp" symbol="UPDATE_TIMESTAMP_OP" value="11"></opcode>
-          <opcode name="DumpsCountersOp" symbol="DUMPT_COUNTERS_OP" value="12"></opcode>
+					<opcode name="DumpsCountersOp" symbol="DUMPT_COUNTERS_OP" value="12"></opcode>
+					<opcode name="JITCodeEventOp" symbol="JIT_CODE_EVENT_OP" value="13"></opcode>
 				</opcodes>
 				<templates>
+          <template tid="tidLog">
+            <data name="message1" inType="win:AnsiString" outType="xs:string"></data>
+            <data name="message2" inType="win:AnsiString" outType="xs:string"></data>
+            <data name="message3" inType="win:AnsiString" outType="xs:string"></data>
+            <data name="message4" inType="win:AnsiString" outType="xs:string"></data>
+          </template>
+					<template tid="tidMessage">
+						<data name="message" inType="win:AnsiString" outType="xs:string"></data>
+						<data name="source_line" inType="win:AnsiString" outType="xs:string"></data>
+						<data name="stack_trace" inType="win:AnsiString" outType="xs:string"></data>
+						<data name="line_number" inType="win:Int32" outType="xs:int"></data>
+						<data name="start_position" inType="win:Int32" outType="xs:int"></data>
+						<data name="end_position" inType="win:Int32" outType="xs:int"></data>
+						<data name="error_level" inType="win:Int32" outType="xs:int"></data>
+						<data name="start_column" inType="win:Int32" outType="xs:int"></data>
+						<data name="end_column" inType="win:Int32" outType="xs:int"></data>
+					</template>
+					<template tid="tidJitCodeEvent">
+						<data name="eventType" inType="win:UInt8" outType="xs:unsignedByte"></data>
+						<data name="codeType" inType="win:UInt8" outType="xs:unsignedByte"></data>
+						<data name="name" inType="win:AnsiString" outType="xs:string"></data>
+						<data name="code_details" inType="win:AnsiString" outType="xs:string"></data>
+					</template>
 					<template tid="tidCounter">
-            <data name="when" inType="win:AnsiString" outType="xs:string"></data>
+						<data name="when" inType="win:AnsiString" outType="xs:string"></data>
+						<data name="cookie" inType="win:UInt32" outType="xs:unsignedInt"></data>
 						<data name="name" inType="win:AnsiString" outType="xs:string"></data>
 						<data name="count" inType="win:Int32" outType="xs:int"></data>
 						<data name="sample_total" inType="win:Int32" outType="xs:int"></data>

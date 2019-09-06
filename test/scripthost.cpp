@@ -160,7 +160,7 @@ public:
   }
 
   bool IdleTasksEnabled() override {
-    return false;
+    return true;
   }
 private:
   MyTaskRunnerAdapter(const MyTaskRunnerAdapter&) = delete;
@@ -175,7 +175,13 @@ ScriptHost::ScriptHost() {
 
   jsiTaskRunner_->PostTask(std::make_unique<FunctionTask>([this]() {
     v8runtime::V8RuntimeArgs args{};
-	args.liteMode = true;
+	args.liteMode = false;
+    args.trackGCObjectStats = true;
+    args.backgroundMode = false;
+
+	args.maximum_heap_size_in_bytes = 10 * 1024 * 1024;
+
+
     auto tr = new MyTaskRunnerAdapter(jsiTaskRunner_);
     args.foreground_task_runner = std::unique_ptr<MyTaskRunnerAdapter>(tr);
     runtime_ = v8runtime::makeV8Runtime(std::move(args));
