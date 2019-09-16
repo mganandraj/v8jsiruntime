@@ -9,7 +9,7 @@ int main() {
 	// std::string script("print('Hoy'); //# sourceURL=filename.js");
 
 	std::string script(
-            "function fib(n) { if (n < 2) { return 1; } return fib(n - 1) + fib(n - 2) } print(fib(10));");
+            "function fib(n) { if (n < 2) { return 1; } return fib(n - 1) + fis(n - 2) } print(fib(20));");
 
 	ScriptHost::instance().runScript(script);
 

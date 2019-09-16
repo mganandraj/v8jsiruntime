@@ -412,6 +412,11 @@ static size_t NearHeapLimitCallback(
     size_t current_heap_limit,
     size_t initial_heap_limit);
 
+static void GCPrologueCallback(
+    v8::Isolate *isolate,
+    v8::GCType type,
+    v8::GCCallbackFlags flags);
+
 V8RuntimeArgs& runtimeArgs() {
   return args_;
 }

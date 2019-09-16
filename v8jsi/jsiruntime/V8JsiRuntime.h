@@ -94,6 +94,7 @@ struct V8RuntimeArgs {
   bool enableJitTracing{false};
   bool enableMessageTracing{true};
   bool enableLog{true};
+  bool enableGCTracing{true};
 
   size_t initial_heap_size_in_bytes{0};
   size_t maximum_heap_size_in_bytes{0};

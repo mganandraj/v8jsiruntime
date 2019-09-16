@@ -345,7 +345,7 @@ void V8Platform::CallIdleOnForegroundThread(
 }
 
 bool V8Platform::IdleTasksEnabled(v8::Isolate *isolate) {
-  return true;
+  return GetForegroundTaskRunner(isolate)->IdleTasksEnabled();
 }
 
 int V8Platform::NumberOfWorkerThreads() {

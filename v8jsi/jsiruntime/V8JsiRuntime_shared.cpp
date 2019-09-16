@@ -64,45 +64,43 @@ void V8Runtime::AddHostObjectLifetimeTracker(
 /*static */ void V8Runtime::OnMessage(
     v8::Local<v8::Message> message,
     v8::Local<v8::Value> error) {
+  v8::Isolate *isolate = v8::Isolate::GetCurrent();
 
-	v8::Isolate *isolate = v8::Isolate::GetCurrent();
+  v8::String::Utf8Value msg(isolate, message->Get());
+  v8::String::Utf8Value source_line(
+      isolate,
+      message->GetSourceLine(isolate->GetCurrentContext()).ToLocalChecked());
 
-	v8::String::Utf8Value msg(isolate, message->Get());
-        v8::String::Utf8Value source_line(
-            isolate,
-            message->GetSourceLine(isolate->GetCurrentContext())
-                .ToLocalChecked());
+  EventWriteMESSAGE(
+      *msg,
+      *source_line,
+      "",
+      message->GetLineNumber(isolate->GetCurrentContext()).ToChecked(),
+      message->GetStartPosition(),
+      message->GetEndPosition(),
+      message->ErrorLevel(),
+      message->GetStartColumn(),
+      message->GetEndColumn());
 
-	EventWriteMESSAGE(
-            *msg,
-            *source_line,
-            "",
-            message->GetLineNumber(isolate->GetCurrentContext()).ToChecked(),
-            message->GetStartPosition(),
-            message->GetEndPosition(),
-            message->ErrorLevel(),
-            message->GetStartColumn(),
-            message->GetEndColumn());
-		
-  //IsolateData *isolateData =
+  // IsolateData *isolateData =
   //    reinterpret_cast<IsolateData *>(isolate->GetData(ISOLATE_DATA_SLOT));
-  //V8Runtime *runtime = reinterpret_cast<V8Runtime *>(isolateData->runtime_);
+  // V8Runtime *runtime = reinterpret_cast<V8Runtime *>(isolateData->runtime_);
 
-  //v8::String::Utf8Value filename(
+  // v8::String::Utf8Value filename(
   //    isolate, message->GetScriptOrigin().ResourceName());
   //// (filename):(line) (message)
-  //std::stringstream warning;
-  //warning << *filename;
-  //warning << ":";
-  //warning << message->GetLineNumber(isolate->GetCurrentContext()).FromMaybe(-1);
-  //warning << " ";
-  //v8::String::Utf8Value msg(isolate, message->Get());
-  //warning << *msg;
+  // std::stringstream warning;
+  // warning << *filename;
+  // warning << ":";
+  // warning <<
+  // message->GetLineNumber(isolate->GetCurrentContext()).FromMaybe(-1); warning
+  // << " "; v8::String::Utf8Value msg(isolate, message->Get()); warning << *msg;
 
   //// Note :: The log levels don't match with react native definitions.
   //// (*(runtime->runtimeArgs().logger))(warning.str(), message->ErrorLevel());
 
-  //if (message->ErrorLevel() == v8::Isolate::MessageErrorLevel::kMessageError) {
+  // if (message->ErrorLevel() == v8::Isolate::MessageErrorLevel::kMessageError)
+  // {
   //  std::abort();
   //}
 }
@@ -116,7 +114,21 @@ size_t V8Runtime::NearHeapLimitCallback(
       std::to_string(current_heap_limit).c_str(),
       std::to_string(initial_heap_limit).c_str(),
       "");
-	}
+
+  // Add 5MB.
+  return current_heap_limit + 5 * 1024 * 1024;
+}
+
+void V8Runtime::GCPrologueCallback(
+    v8::Isolate *isolate,
+    v8::GCType type,
+    v8::GCCallbackFlags flags) {
+  EventWriteV8JSI_LOG(
+      "GCPrologueCallback",
+      std::to_string(type).c_str(),
+      std::to_string(flags).c_str(),
+      "");
+}
 
 CounterMap *V8Runtime::counter_map_;
 char V8Runtime::counters_file_[sizeof(CounterCollection)];
@@ -157,7 +169,7 @@ void V8Runtime::DumpCounters(const char *when) {
     if (element.second->count() > 0)
       EventWriteDUMPT_COUNTERS(
           when,
-		  cookie,
+          cookie,
           element.first.c_str(),
           element.second->count(),
           element.second->sample_total(),
@@ -258,9 +270,9 @@ struct SameCodeObjects {
     case v8::JitCodeEvent::CODE_ADDED:
       if (event->code_type == v8::JitCodeEvent::CodeType::BYTE_CODE) {
         std::cout << "B!!";
-	  }
+      }
 
-		EventWriteJIT_CODE_EVENT(
+      EventWriteJIT_CODE_EVENT(
           event->type,
           event->code_type,
           std::string(event->name.str, event->name.len).c_str(),
@@ -351,13 +363,12 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
 
   if (args_.initial_heap_size_in_bytes > 0 ||
       args_.maximum_heap_size_in_bytes > 0) {
-	v8::ResourceConstraints constraints;
+    v8::ResourceConstraints constraints;
     constraints.ConfigureDefaultsFromHeapSize(
         args_.initial_heap_size_in_bytes, args_.maximum_heap_size_in_bytes);
 
     create_params_.constraints = constraints;
   }
-  
 
   counter_map_ = new CounterMap();
   if (args_.trackGCObjectStats) {
@@ -391,12 +402,11 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
     isolate_->AddMessageListener(OnMessage);
   }
 
-  // isolate_->AddMessageListenerWithErrorLevel(OnMessage,
-  // v8::Isolate::MessageErrorLevel::kMessageAll);
-  //isolate_->AddMessageListenerWithErrorLevel(
-  //    OnMessage,
-  //    v8::Isolate::MessageErrorLevel::kMessageError |
-  //        v8::Isolate::MessageErrorLevel::kMessageWarning);
+  if (args_.enableGCTracing) {
+    isolate_->AddGCPrologueCallback(GCPrologueCallback);
+  }
+
+  isolate_->AddNearHeapLimitCallback(NearHeapLimitCallback, nullptr);
 
   // TODO :: Toggle for ship builds.
   isolate_->SetAbortOnUncaughtExceptionCallback(
