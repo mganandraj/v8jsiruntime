@@ -324,11 +324,15 @@ struct SameCodeObjects {
 V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
   EventRegisterv8jsi_Provider();
 
+  // We expect the platform to be created, managed and initialized at higher layers, in future.
   if (!args_.platform) {
+
+	// Note :: In future, we should be able to share the platform across runtimes.
+    platform_ = std::make_unique<V8Platform>(args_.enableTracing);
+    v8::V8::InitializePlatform(platform_.get());
+
     // args.platform = platform_ = v8::platform::NewDefaultPlatform().release();
     // v8::V8::InitializePlatform(const_cast<v8::Platform*>(platform_));
-
-    std::terminate();
 
     // HACK!!
     // args_.inspector =
@@ -457,13 +461,15 @@ V8Runtime::~V8Runtime() {
 
   delete create_params_.array_buffer_allocator;
 
-  {
+  /*{
     std::lock_guard<std::mutex> lock(sMutex_);
     if (sIsPlatformCreated_ && 0 == --sCurrentIsolateCount_) {
       v8::V8::ShutdownPlatform();
       sIsPlatformCreated_ = false;
     }
-  }
+  }*/
+
+  // TODO :: Shutting down V8 and V8 platform can't be done per runtime.
 }
 
 jsi::Value V8Runtime::evaluateJavaScript(
@@ -1302,13 +1308,14 @@ v8::Local<v8::Object> V8Runtime::objectRef(const jsi::Object &obj) {
 
 std::unique_ptr<jsi::Runtime> makeV8Runtime(V8RuntimeArgs &&args) {
   // TODO :: Push the ownership of the platform to the caller.
-  static V8Platform platform(args.enableTracing);
-  static std::atomic_flag is_platform_initialized{false};
-  if (!is_platform_initialized.test_and_set(std::memory_order_acquire)) {
-    v8::V8::InitializePlatform(static_cast<v8::Platform *>(&platform));
-  }
+  // static V8Platform platform(args.enableTracing);
+  // static std::atomic_flag is_platform_initialized{false};
+  // if (!is_platform_initialized.test_and_set(std::memory_order_acquire)) {
+  //   v8::V8::InitializePlatform(static_cast<v8::Platform *>(&platform));
+  // }
 
-  args.platform = &platform;
+  // args.platform = &platform;
+
   return std::make_unique<V8Runtime>(std::move(args));
 }
 

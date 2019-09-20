@@ -501,7 +501,7 @@ private:
 
   static void JitCodeEventListener(const v8::JitCodeEvent *event);
 
-  const v8::Platform* platform_;
+  std::unique_ptr<v8::Platform> platform_;
   v8::StartupData custom_snapshot_startup_data_;
 
   std::vector<std::unique_ptr<ExternalOwningOneByteStringResource>> owned_external_string_resources_;
