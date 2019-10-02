@@ -26,6 +26,7 @@ struct JSIIdleTask {
 };
 
 struct JSITaskRunner {
+  virtual ~JSITaskRunner() = default;
   virtual void postTask(std::unique_ptr<JSITask> task) = 0;
   virtual void postDelayedTask(
       std::unique_ptr<JSITask> task,
@@ -92,9 +93,9 @@ struct V8RuntimeArgs {
 
   bool enableTracing{false};
   bool enableJitTracing{false};
-  bool enableMessageTracing{true};
-  bool enableLog{true};
-  bool enableGCTracing{true};
+  bool enableMessageTracing{false};
+  bool enableLog{false};
+  bool enableGCTracing{false};
 
   size_t initial_heap_size_in_bytes{0};
   size_t maximum_heap_size_in_bytes{0};
@@ -110,7 +111,7 @@ constexpr int ISOLATE_DATA_SLOT = 0;
 
 // Platform needs to map every isolate to this data.
 struct IsolateData {
-  std::shared_ptr<v8::TaskRunner> foreground_task_runner_;
+  void* foreground_task_runner_;
 
   // Weak reference.
   void *runtime_;

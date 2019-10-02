@@ -10,13 +10,12 @@
 
 #include <atomic>
 #include <cstdlib>
-#include <iostream>
 #include <list>
 #include <mutex>
 #include <sstream>
 
 #include <windows.h>
-#include "etw\v8jsiruntime.h"
+#include "etw/v8jsiruntime.h"
 
 using namespace facebook;
 
@@ -30,9 +29,10 @@ using namespace facebook;
 
 namespace v8runtime {
 
-std::mutex V8Runtime::sMutex_;
-bool V8Runtime::sIsPlatformCreated_{false};
-unsigned int V8Runtime::sCurrentIsolateCount_{0};
+thread_local uint16_t V8Runtime::tls_isolate_usage_counter_ = 0;
+
+/*static */ std::unique_ptr<V8Platform> V8PlatformHolder::platform_s_;
+/*static */ std::atomic_uint32_t V8PlatformHolder::use_count_s_;
 
 // String utilities
 namespace {
@@ -58,7 +58,7 @@ void V8Runtime::AddHostObjectLifetimeTracker(
   // gets cleaned up when the runtime is teared down.
   // TODO :: We should remove entries from the list as the objects are garbage
   // collected.
-  hostObjectLifetimeTrackerList_.push_back(hostObjectLifetimeTracker);
+  host_object_lifetime_tracker_list_.push_back(hostObjectLifetimeTracker);
 }
 
 /*static */ void V8Runtime::OnMessage(
@@ -81,28 +81,6 @@ void V8Runtime::AddHostObjectLifetimeTracker(
       message->ErrorLevel(),
       message->GetStartColumn(),
       message->GetEndColumn());
-
-  // IsolateData *isolateData =
-  //    reinterpret_cast<IsolateData *>(isolate->GetData(ISOLATE_DATA_SLOT));
-  // V8Runtime *runtime = reinterpret_cast<V8Runtime *>(isolateData->runtime_);
-
-  // v8::String::Utf8Value filename(
-  //    isolate, message->GetScriptOrigin().ResourceName());
-  //// (filename):(line) (message)
-  // std::stringstream warning;
-  // warning << *filename;
-  // warning << ":";
-  // warning <<
-  // message->GetLineNumber(isolate->GetCurrentContext()).FromMaybe(-1); warning
-  // << " "; v8::String::Utf8Value msg(isolate, message->Get()); warning << *msg;
-
-  //// Note :: The log levels don't match with react native definitions.
-  //// (*(runtime->runtimeArgs().logger))(warning.str(), message->ErrorLevel());
-
-  // if (message->ErrorLevel() == v8::Isolate::MessageErrorLevel::kMessageError)
-  // {
-  //  std::abort();
-  //}
 }
 
 size_t V8Runtime::NearHeapLimitCallback(
@@ -321,39 +299,7 @@ struct SameCodeObjects {
   }
 }
 
-V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
-  EventRegisterv8jsi_Provider();
-
-  // We expect the platform to be created, managed and initialized at higher layers, in future.
-  if (!args_.platform) {
-
-	// Note :: In future, we should be able to share the platform across runtimes.
-    platform_ = std::make_unique<V8Platform>(args_.enableTracing);
-    v8::V8::InitializePlatform(platform_.get());
-
-    // args.platform = platform_ = v8::platform::NewDefaultPlatform().release();
-    // v8::V8::InitializePlatform(const_cast<v8::Platform*>(platform_));
-
-    // HACK!!
-    // args_.inspector =
-    // InspectorInterface::create(const_cast<v8::Platform*>(platform_), 8080);
-  }
-
-  std::vector<char *> argv;
-  argv.push_back("v8jsi");
-
-  if (args_.liteMode)
-    argv.push_back("--lite-mode");
-
-  if (args_.trackGCObjectStats)
-    argv.push_back("--track_gc_object_stats");
-
-  int argc = argv.size();
-  v8::V8::SetFlagsFromCommandLine(&argc, const_cast<char **>(&argv[0]), false);
-
-  // This can be called multiple times in process.
-  v8::V8::Initialize();
-
+v8::Isolate *V8Runtime::CreateNewIsolate() {
   if (args_.custom_snapshot_blob) {
     custom_snapshot_startup_data_ = {
         reinterpret_cast<const char *>(args_.custom_snapshot_blob->data()),
@@ -385,15 +331,17 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
   if (isolate_ == nullptr)
     std::abort();
 
-  auto foreground_task_runner = std::make_shared<TaskRunnerAdapter>(
-      std::move(args_.foreground_task_runner));
-  isolate_data_ = std::make_unique<v8runtime::IsolateData>(
-      v8runtime::IsolateData({std::move(foreground_task_runner), this}));
-  isolate_->SetData(v8runtime::ISOLATE_DATA_SLOT, isolate_data_.get());
+  foreground_task_runner_ = std::make_shared<TaskRunnerAdapter>(
+      std::move(args_.foreground_task_runner)); 
+  isolate_->SetData(
+      v8runtime::ISOLATE_DATA_SLOT,
+      new v8runtime::IsolateData({&foreground_task_runner_, this}));
 
   v8::Isolate::Initialize(isolate_, create_params_);
 
-  MapCounters(isolate_, "v8jsi");
+  if (args_.trackGCObjectStats) {
+    MapCounters(isolate_, "v8jsi");
+  }
 
   isolate_->SetJitCodeEventHandler(
       v8::kJitCodeEventDefault, JitCodeEventListener);
@@ -418,6 +366,52 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
 
   isolate_->Enter();
 
+  return isolate_;
+}
+
+V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
+  EventRegisterv8jsi_Provider();
+
+  // We expect the platform to be created, managed and initialized at higher
+  // layers, in future. if (!args_.platform) {
+
+  // Note :: In future, we should be able to share the platform across runtimes.
+  // platform_ = std::make_unique<V8Platform>(args_.enableTracing);
+  // v8::V8::InitializePlatform(platform_.get());
+
+  // args.platform = platform_ = v8::platform::NewDefaultPlatform().release();
+  // v8::V8::InitializePlatform(const_cast<v8::Platform*>(platform_));
+
+  // HACK!!
+  // args_.inspector =
+  // InspectorInterface::create(const_cast<v8::Platform*>(platform_), 8080);
+  // }
+
+  // v8PlatformHolder_
+
+  std::vector<char *> argv;
+  argv.push_back("v8jsi");
+
+  if (args_.liteMode)
+    argv.push_back("--lite-mode");
+
+  if (args_.trackGCObjectStats)
+    argv.push_back("--track_gc_object_stats");
+
+  int argc = argv.size();
+  v8::V8::SetFlagsFromCommandLine(&argc, const_cast<char **>(&argv[0]), false);
+
+  // This can be called multiple times in process.
+  v8::V8::Initialize();
+
+  if (tls_isolate_usage_counter_++ > 0) {
+    isolate_ = v8::Isolate::GetCurrent();
+  } else {
+    CreateNewIsolate();
+  }
+
+  // tls_isolate_usage_counter_++;
+
   v8::HandleScope handleScope(isolate_);
   context_.Reset(GetIsolate(), CreateContext(isolate_));
 
@@ -441,35 +435,31 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
       nullptr,
       HostObjectProxy::Enumerator));
   hostObjectTemplate->SetInternalFieldCount(1);
-  hostObjectConstructor_.Reset(
+  host_object_constructor_.Reset(
       isolate_,
       constructorForHostObjectTemplate->GetFunction(context_.Get(isolate_))
           .ToLocalChecked());
 }
 
 V8Runtime::~V8Runtime() {
-  hostObjectConstructor_.Reset();
+  host_object_constructor_.Reset();
   context_.Reset();
 
   for (std::shared_ptr<HostObjectLifetimeTracker> hostObjectLifetimeTracker :
-       hostObjectLifetimeTrackerList_) {
+       host_object_lifetime_tracker_list_) {
     hostObjectLifetimeTracker->ResetHostObject(false /*isGC*/);
   }
 
-  isolate_->Exit();
-  isolate_->Dispose();
+  if (--tls_isolate_usage_counter_ == 0) {
+     isolate_->SetData(v8runtime::ISOLATE_DATA_SLOT, nullptr);
+    
+	  isolate_->Exit();
+	  isolate_->Dispose();
 
-  delete create_params_.array_buffer_allocator;
+	  delete create_params_.array_buffer_allocator;
+  }
 
-  /*{
-    std::lock_guard<std::mutex> lock(sMutex_);
-    if (sIsPlatformCreated_ && 0 == --sCurrentIsolateCount_) {
-      v8::V8::ShutdownPlatform();
-      sIsPlatformCreated_ = false;
-    }
-  }*/
-
-  // TODO :: Shutting down V8 and V8 platform can't be done per runtime.
+  // Note :: We never dispose V8 here. Is it required ?
 }
 
 jsi::Value V8Runtime::evaluateJavaScript(
@@ -496,18 +486,10 @@ jsi::Value V8Runtime::evaluateJavaScript(
     delete external_string_resource;
   }
 
-  /*if (args_.cacheProvider) {
-    v8::Local<v8::String> urlV8String = v8::String::NewFromUtf8(isolate,
-  reinterpret_cast<const char*>(sourceURL.c_str())); std::unique_ptr<const
-  jsi::Buffer> cache{ (*args_.cacheProvider)(sourceURL) };
-    ExecuteString(sourceV8String, cache.get(), urlV8String, true);
-  } else {
-  */
   jsi::Value result = ExecuteString(sourceV8String, sourceURL);
 
   DumpCounters("evaluateJavaScript completion.");
   return result;
-  //}
 }
 
 v8::Local<v8::Script> V8Runtime::GetCompiledScript(
@@ -932,7 +914,7 @@ jsi::Object V8Runtime::createObject(
   _ISOLATE_CONTEXT_ENTER
   HostObjectProxy *hostObjectProxy = new HostObjectProxy(*this, hostobject);
   v8::Local<v8::Object> newObject;
-  if (!hostObjectConstructor_.Get(isolate_)
+  if (!host_object_constructor_.Get(isolate_)
            ->NewInstance(isolate_->GetCurrentContext())
            .ToLocal(&newObject)) {
     throw jsi::JSError(*this, "HostObject construction failed!!");

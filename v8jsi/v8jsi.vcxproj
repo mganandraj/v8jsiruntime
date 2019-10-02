@@ -57,7 +57,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <!-- <PreprocessorDefinitions>JSI_CREATE_SHARED_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions> -->
+      <PreprocessorDefinitions>JSI_CREATE_SHARED_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(V8Root)out\$(Platform)\$(Configuration)\obj\v8_monolith.lib;%(AdditionalDependencies)</AdditionalDependencies>

@@ -311,7 +311,7 @@ std::shared_ptr<v8::TaskRunner> V8Platform::GetForegroundTaskRunner(
     v8::Isolate *isolate) {
   IsolateData *isolate_data =
       reinterpret_cast<IsolateData *>(isolate->GetData(ISOLATE_DATA_SLOT));
-  return isolate_data->foreground_task_runner_;
+  return *reinterpret_cast<std::shared_ptr<v8::TaskRunner>*>( (isolate_data->foreground_task_runner_));
 }
 
 void V8Platform::CallOnWorkerThread(std::unique_ptr<v8::Task> task) {
