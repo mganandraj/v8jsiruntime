@@ -15,9 +15,9 @@
 #include <chrono>
 #include <thread>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
+// #include <boost/uuid/uuid.hpp>
+// #include <boost/uuid/uuid_generators.hpp>
+// #include <boost/uuid/uuid_io.hpp>
 
 #include <condition_variable>
 
@@ -35,8 +35,9 @@ std::string GetProcessTitle() {
 }
 
 std::string GenerateID() {
-  boost::uuids::uuid uuid = boost::uuids::random_generator()();
-  return boost::uuids::to_string(uuid);
+  // boost::uuids::uuid uuid = boost::uuids::random_generator()();
+  // return boost::uuids::to_string(uuid);
+  return "RANDON_UUID";
 }
 
 std::string StringViewToUtf8(const v8_inspector::StringView& view) {

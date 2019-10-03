@@ -109,14 +109,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <!-- <ClCompile Include="inspector\inspector_agent.cpp" />
+    <ClCompile Include="inspector\inspector_agent.cpp" />
     <ClCompile Include="inspector\inspector_socket.cpp" />
     <ClCompile Include="inspector\inspector_socket_server.cpp" />
     <ClCompile Include="inspector\inspector_tcp.cpp" />
     <ClCompile Include="inspector\inspector_utils.cpp" />
     <ClCompile Include="inspector\llhttp.c" />
     <ClCompile Include="inspector\llhttp_api.c" />
-    <ClCompile Include="inspector\llhttp_http.c" /> -->
+    <ClCompile Include="inspector\llhttp_http.c" /> 
     <ClCompile Include="jsiruntime\V8JsiRuntime.cpp" />
     <ClCompile Include="jsi\jsi.cpp" />
     <ClCompile Include="jsi\jsilib-windows.cpp" />

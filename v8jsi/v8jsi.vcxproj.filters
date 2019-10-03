@@ -54,6 +54,30 @@
     <ClCompile Include="jsiruntime\V8JsiRuntime.cpp">
       <Filter>Source Files\jsiruntime</Filter>
     </ClCompile>
+    <ClCompile Include="inspector\llhttp_http.c">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_agent.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_socket.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_socket_server.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_tcp.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\inspector_utils.cpp">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\llhttp.c">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="inspector\llhttp_api.c">
+      <Filter>Source Files\inspector</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inspector\targetver.h">

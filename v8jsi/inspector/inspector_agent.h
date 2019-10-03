@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-#include <jsiruntime/V8JsiRuntime.h>
+#include <public/V8JsiRuntime.h>
 
 namespace v8 {
 	class Platform;

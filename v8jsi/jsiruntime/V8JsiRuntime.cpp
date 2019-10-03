@@ -420,62 +420,7 @@ v8::Isolate *V8Runtime::CreateNewIsolate() {
   return isolate_;
 }
 
-V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
-  EventRegisterv8jsi_Provider();
-
-  V8Platform &platform = platform_holder_.Get();
-
-  // We expect the platform to be created, managed and initialized at higher
-  // layers, in future. if (!args_.platform) {
-
-  // Note :: In future, we should be able to share the platform across runtimes.
-  // platform_ = std::make_unique<V8Platform>(args_.enableTracing);
-  // v8::V8::InitializePlatform(platform_.get());
-
-  // args.platform = platform_ = v8::platform::NewDefaultPlatform().release();
-  // v8::V8::InitializePlatform(const_cast<v8::Platform*>(platform_));
-
-  // HACK!!
-  // args_.inspector =
-  // InspectorInterface::create(const_cast<v8::Platform*>(platform_), 8080);
-  // }
-
-  // v8PlatformHolder_
-
-  std::vector<char *> argv;
-  argv.push_back("v8jsi");
-
-  if (args_.liteMode)
-    argv.push_back("--lite-mode");
-
-  if (args_.trackGCObjectStats)
-    argv.push_back("--track_gc_object_stats");
-
-  int argc = argv.size();
-  v8::V8::SetFlagsFromCommandLine(&argc, const_cast<char **>(&argv[0]), false);
-
-  // This can be called multiple times in process.
-  v8::V8::Initialize();
-
-  if (tls_isolate_usage_counter_++ > 0) {
-    isolate_ = v8::Isolate::GetCurrent();
-  } else {
-    CreateNewIsolate();
-  }
-
-  // tls_isolate_usage_counter_++;
-
-  v8::HandleScope handleScope(isolate_);
-  context_.Reset(GetIsolate(), CreateContext(isolate_));
-
-  v8::Context::Scope context_scope(context_.Get(GetIsolate()));
-
-  if (args_.inspector) {
-    args_.inspector->initialize(
-        isolate_, isolate_->GetCurrentContext(), "JSIRuntime context");
-    args_.inspector->waitForDebugger();
-  }
-
+void V8Runtime::createHostObjectConstructorPerContext() {
   // Create and keep the constuctor for creating Host objects.
   v8::Local<v8::FunctionTemplate> constructorForHostObjectTemplate =
       v8::FunctionTemplate::New(isolate_);
@@ -492,6 +437,53 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
       isolate_,
       constructorForHostObjectTemplate->GetFunction(context_.Get(isolate_))
           .ToLocalChecked());
+}
+
+void V8Runtime::initializeTracing() {
+  EventRegisterv8jsi_Provider();
+}
+
+void V8Runtime::initializeV8() {
+  std::vector<char *> argv;
+  argv.push_back("v8jsi");
+
+  if (args_.liteMode)
+    argv.push_back("--lite-mode");
+
+  if (args_.trackGCObjectStats)
+    argv.push_back("--track_gc_object_stats");
+
+  int argc = argv.size();
+  v8::V8::SetFlagsFromCommandLine(&argc, const_cast<char **>(&argv[0]), false);
+
+  // Assuming Initialize can be called multiple times in process.
+  v8::V8::Initialize();
+}
+
+V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
+  initializeTracing();
+  initializeV8();
+
+  // Try to reuse the already existing isolate in this thread.
+  if (tls_isolate_usage_counter_++ > 0) {
+    isolate_ = v8::Isolate::GetCurrent();
+  } else {
+    CreateNewIsolate();
+  }
+
+  v8::Isolate::Scope isolate_scope(isolate_);
+  v8::HandleScope handleScope(isolate_);
+  context_.Reset(GetIsolate(), CreateContext(isolate_));
+
+  v8::Context::Scope context_scope(context_.Get(GetIsolate()));
+
+  if (args_.inspector) {
+    args_.inspector->initialize(
+        isolate_, isolate_->GetCurrentContext(), "JSIRuntime context");
+    args_.inspector->waitForDebugger();
+  }
+
+  createHostObjectConstructorPerContext();
 }
 
 V8Runtime::~V8Runtime() {

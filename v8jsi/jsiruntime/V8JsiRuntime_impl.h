@@ -590,7 +590,11 @@ class V8Runtime : public facebook::jsi::Runtime {
   v8::Isolate *GetIsolate() const {
     return isolate_;
   }
+
+  void initializeTracing();
+  void initializeV8();
   v8::Isolate *CreateNewIsolate();
+  void createHostObjectConstructorPerContext();
 
   // Basically convenience casts
   static v8::Local<v8::String> stringRef(const facebook::jsi::String &str);
