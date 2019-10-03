@@ -1,7 +1,4 @@
-#include "V8JsiRuntime.h"
 #include "V8JsiRuntime_impl.h"
-
-#include "TaskRunnerAdapter.h"
 
 #include "libplatform/libplatform.h"
 #include "v8.h"
@@ -15,7 +12,7 @@
 #include <sstream>
 
 #include <windows.h>
-#include "etw/v8jsiruntime.h"
+#include "etw/tracing.h"
 
 using namespace facebook;
 
@@ -32,7 +29,61 @@ namespace v8runtime {
 thread_local uint16_t V8Runtime::tls_isolate_usage_counter_ = 0;
 
 /*static */ std::unique_ptr<V8Platform> V8PlatformHolder::platform_s_;
-/*static */ std::atomic_uint32_t V8PlatformHolder::use_count_s_;
+/*static */ std::atomic_uint32_t V8PlatformHolder::use_count_s_ = 0;
+/*static */ std::mutex V8PlatformHolder::mutex_s_;
+
+class TaskAdapter : public v8runtime::JSITask {
+ public:
+  TaskAdapter(std::unique_ptr<v8::Task> &&task) : task_(std::move(task)) {}
+
+  void run() override {
+    task_->Run();
+  }
+
+ private:
+  std::unique_ptr<v8::Task> task_;
+};
+
+class IdleTaskAdapter : public v8runtime::JSIIdleTask {
+ public:
+  IdleTaskAdapter(std::unique_ptr<v8::IdleTask> &&task)
+      : task_(std::move(task)) {}
+
+  void run(double deadline_in_seconds) override {
+    task_->Run(deadline_in_seconds);
+  }
+
+ private:
+  std::unique_ptr<v8::IdleTask> task_;
+};
+
+class TaskRunnerAdapter : public v8::TaskRunner {
+ public:
+  TaskRunnerAdapter(std::unique_ptr<v8runtime::JSITaskRunner> &&taskRunner)
+      : taskRunner_(std::move(taskRunner)) {}
+
+  void PostTask(std::unique_ptr<v8::Task> task) override {
+    taskRunner_->postTask(std::make_unique<TaskAdapter>(std::move(task)));
+  }
+
+  void PostDelayedTask(std::unique_ptr<v8::Task> task, double delay_in_seconds)
+      override {
+    taskRunner_->postDelayedTask(
+        std::make_unique<TaskAdapter>(std::move(task)), delay_in_seconds);
+  }
+
+  void PostIdleTask(std::unique_ptr<v8::IdleTask> task) override {
+    taskRunner_->postIdleTask(
+        std::make_unique<IdleTaskAdapter>(std::move(task)));
+  }
+
+  bool IdleTasksEnabled() override {
+    return taskRunner_->IdleTasksEnabled();
+  }
+
+ private:
+  std::unique_ptr<v8runtime::JSITaskRunner> taskRunner_;
+};
 
 // String utilities
 namespace {
@@ -371,6 +422,8 @@ v8::Isolate *V8Runtime::CreateNewIsolate() {
 
 V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
   EventRegisterv8jsi_Provider();
+
+  V8Platform &platform = platform_holder_.Get();
 
   // We expect the platform to be created, managed and initialized at higher
   // layers, in future. if (!args_.platform) {

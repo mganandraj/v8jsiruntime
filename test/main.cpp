@@ -1,4 +1,4 @@
-#include "jsiruntime/V8JsiRuntime.h"
+#include "public/V8JsiRuntime.h"
 
 #include "scripthost.h"
 
@@ -18,10 +18,10 @@ int main() {
 
   {
     auto taskRunner = std::make_shared<MyTaskRunner>();
-    // auto taskRunner2 = std::make_shared<MyTaskRunner>();
+    auto taskRunner2 = std::make_shared<MyTaskRunner>();
 
     ScriptHost host(taskRunner);
-    ScriptHost host2(taskRunner);
+    ScriptHost host2(taskRunner2);
 
     host.runScript(script);
     host2.runScript(script);

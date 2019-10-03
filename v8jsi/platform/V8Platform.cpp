@@ -9,10 +9,8 @@
 #include <queue>
 #include <thread>
 
-#include <jsiruntime/V8JsiRuntime.h>
-
 #include "windows.h"
-#include <etw\v8jsiruntime.h>
+#include <etw\tracing.h>
 
 // #include <cxxreact/MessageQueueThread.h>
 

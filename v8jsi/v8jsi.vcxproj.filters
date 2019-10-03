@@ -34,6 +34,9 @@
     <Filter Include="Source Files\etw">
       <UniqueIdentifier>{00893b5e-9183-4968-9279-2623c890cc63}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\public">
+      <UniqueIdentifier>{cd9f8d64-cbaf-4960-8a7f-719985c26ee5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="jsi\jsi.cpp">
@@ -48,7 +51,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="jsiruntime\V8JsiRuntime_shared.cpp">
+    <ClCompile Include="jsiruntime\V8JsiRuntime.cpp">
       <Filter>Source Files\jsiruntime</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,24 +104,21 @@
     <ClInclude Include="inspector\llhttp.h">
       <Filter>Header Files\inspector</Filter>
     </ClInclude>
-    <ClInclude Include="jsiruntime\TaskRunnerAdapter.h">
-      <Filter>Header Files\jsiruntime</Filter>
-    </ClInclude>
     <ClInclude Include="platform\V8Platform.h">
-      <Filter>Header Files\jsiruntime</Filter>
-    </ClInclude>
-    <ClInclude Include="jsiruntime\V8JsiRuntime.h">
       <Filter>Header Files\jsiruntime</Filter>
     </ClInclude>
     <ClInclude Include="jsiruntime\V8JsiRuntime_impl.h">
       <Filter>Header Files\jsiruntime</Filter>
     </ClInclude>
-    <ClInclude Include="etw\v8jsiruntime.h">
+    <ClInclude Include="etw\tracing.h">
       <Filter>Source Files\etw</Filter>
+    </ClInclude>
+    <ClInclude Include="public\V8JsiRuntime.h">
+      <Filter>Header Files\public</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="etw\v8jsiruntime.man">
+    <None Include="etw\tracing.man">
       <Filter>Source Files\etw</Filter>
     </None>
   </ItemGroup>

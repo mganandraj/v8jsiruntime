@@ -1,6 +1,6 @@
 #pragma once
 
-#include "jsiruntime/V8JsiRuntime.h"
+#include "public/V8JsiRuntime.h"
 
 #include "libplatform/libplatform.h"
 #include "v8.h"
@@ -79,24 +79,32 @@ class V8PlatformHolder {
   V8Platform &Get() {
     assert(use_count_s_ > 0);
     assert(platform_s_);
-    return *platform_s_;
+    
+	if (!platform_s_)
+      std::terminate();
+
+	return *platform_s_;
   }
 
   V8PlatformHolder() {
-    uint32_t current = use_count_s_;
+    std::lock_guard<std::mutex> guard(mutex_s_);
+	/*uint32_t current = use_count_s_;
     while (!use_count_s_.compare_exchange_weak(current, current + 1))
-      ;
-    if (current == 0) {
+      ;*/
+
+    if (use_count_s_++ == 0) {
       platform_s_ = std::make_unique<V8Platform>(true);
       v8::V8::InitializePlatform(platform_s_.get());
     }
   }
 
   ~V8PlatformHolder() {
-    uint32_t current = use_count_s_;
+    std::lock_guard<std::mutex> guard(mutex_s_);
+	/*uint32_t current = use_count_s_;
     while (!use_count_s_.compare_exchange_weak(current, current - 1))
-      ;
-    if (current == 1) {
+      ;*/
+
+	if (--use_count_s_  == 0) {
       v8::V8::ShutdownPlatform();
       platform_s_ = nullptr;
     }
@@ -108,6 +116,7 @@ class V8PlatformHolder {
 
   static std::unique_ptr<V8Platform> platform_s_;
   static std::atomic_uint32_t use_count_s_;
+  static std::mutex mutex_s_;
 
 }; // namespace v8runtime
 

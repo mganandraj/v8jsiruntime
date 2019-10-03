@@ -2,7 +2,7 @@
 
 #include "scripthost.h"
 
-#include <jsiruntime/V8JsiRuntime.h>
+#include "public/V8JsiRuntime.h"
 
 #include "typedjsi.h"
 

@@ -10,7 +10,7 @@
 #include "libplatform/libplatform.h"
 #include "v8.h"
 
-#include <jsiruntime/V8JsiRuntime.h>
+#include "public/V8JsiRuntime.h"
 
 // TODO :: this must be fixed.
 // #include <jsiruntime/V8Runtime_impl.h>

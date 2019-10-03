@@ -117,14 +117,14 @@
     <ClCompile Include="inspector\llhttp.c" />
     <ClCompile Include="inspector\llhttp_api.c" />
     <ClCompile Include="inspector\llhttp_http.c" /> -->
-    <ClCompile Include="jsiruntime\V8JsiRuntime_shared.cpp" />
+    <ClCompile Include="jsiruntime\V8JsiRuntime.cpp" />
     <ClCompile Include="jsi\jsi.cpp" />
     <ClCompile Include="jsi\jsilib-windows.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="platform\V8Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="etw\v8jsiruntime.h" />
+    <ClInclude Include="etw\tracing.h" />
     <ClInclude Include="inspector\inspector_agent.h" />
     <ClInclude Include="inspector\inspector_socket.h" />
     <ClInclude Include="inspector\inspector_socket_server.h" />
@@ -132,8 +132,6 @@
     <ClInclude Include="inspector\inspector_utils.h" />
     <ClInclude Include="inspector\llhttp.h" />
     <ClInclude Include="inspector\targetver.h" />
-    <ClInclude Include="jsiruntime\TaskRunnerAdapter.h" />
-    <ClInclude Include="jsiruntime\V8JsiRuntime.h" />
     <ClInclude Include="jsiruntime\V8JsiRuntime_impl.h" />
     <ClInclude Include="jsi\decorator.h" />
     <ClInclude Include="jsi\instrumentation.h" />
@@ -145,9 +143,10 @@
     <ClInclude Include="jsi\ScriptStore.h" />
     <ClInclude Include="jsi\threadsafe.h" />
     <ClInclude Include="platform\V8Platform.h" />
+    <ClInclude Include="public\V8JsiRuntime.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="etw\v8jsiruntime.man" />
+    <None Include="etw\tracing.man" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
