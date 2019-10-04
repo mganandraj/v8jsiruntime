@@ -76,6 +76,8 @@ struct V8RuntimeArgs {
   bool enableGCTracing{false};
 
   bool enableInspector{false};
+
+  // chrome-devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws=localhost:8888
   uint16_t inspectorPort{8888};
 
   size_t initial_heap_size_in_bytes{0};
