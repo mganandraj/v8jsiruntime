@@ -7,6 +7,8 @@
 
 #include "platform/V8Platform.h"
 
+#include "inspector/inspector_agent.h"
+
 #include <atomic>
 #include <cstdlib>
 #include <iostream>
@@ -614,6 +616,8 @@ class V8Runtime : public facebook::jsi::Runtime {
       v8::Local<v8::String> str) const;
   facebook::jsi::Runtime::PointerValue *makeObjectValue(
       v8::Local<v8::Object> obj) const;
+
+  std::unique_ptr<inspector::Agent> inspector_agent_;
 
   V8RuntimeArgs args_;
 

@@ -198,6 +198,8 @@ ScriptHost::ScriptHost(std::shared_ptr<MyTaskRunner> jsiTaskRunner) {
     args.trackGCObjectStats = false;
     args.backgroundMode = false;
 
+	args.enableInspector = true;
+
     args.maximum_heap_size_in_bytes = 10 * 1024 * 1024;
 
     // auto tr = new MyTaskRunnerAdapter(jsiTaskRunner_);

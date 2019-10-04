@@ -383,7 +383,7 @@ v8::Isolate *V8Runtime::CreateNewIsolate() {
     std::abort();
 
   foreground_task_runner_ = std::make_shared<TaskRunnerAdapter>(
-      std::move(args_.foreground_task_runner)); 
+      std::move(args_.foreground_task_runner));
   isolate_->SetData(
       v8runtime::ISOLATE_DATA_SLOT,
       new v8runtime::IsolateData({&foreground_task_runner_, this}));
@@ -477,10 +477,15 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
 
   v8::Context::Scope context_scope(context_.Get(GetIsolate()));
 
-  if (args_.inspector) {
-    args_.inspector->initialize(
-        isolate_, isolate_->GetCurrentContext(), "JSIRuntime context");
-    args_.inspector->waitForDebugger();
+  if (args_.enableInspector) {
+    inspector_agent_ = std::make_unique<inspector::Agent>(
+        platform_holder_.Get(),
+        isolate_,
+        context_.Get(GetIsolate()),
+        "JSIRuntime context",
+        args_.inspectorPort);
+    inspector_agent_->start();
+    inspector_agent_->waitForDebugger();
   }
 
   createHostObjectConstructorPerContext();
@@ -496,12 +501,12 @@ V8Runtime::~V8Runtime() {
   }
 
   if (--tls_isolate_usage_counter_ == 0) {
-     isolate_->SetData(v8runtime::ISOLATE_DATA_SLOT, nullptr);
-    
-	  isolate_->Exit();
-	  isolate_->Dispose();
+    isolate_->SetData(v8runtime::ISOLATE_DATA_SLOT, nullptr);
 
-	  delete create_params_.array_buffer_allocator;
+    isolate_->Exit();
+    isolate_->Dispose();
+
+    delete create_params_.array_buffer_allocator;
   }
 
   // Note :: We never dispose V8 here. Is it required ?
