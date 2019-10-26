@@ -9,8 +9,9 @@
 #include <queue>
 #include <thread>
 
-#include "windows.h"
+#include <windows.h>
 #include <etw\tracing.h>
+
 
 // #include <cxxreact/MessageQueueThread.h>
 
@@ -34,8 +35,7 @@ uint64_t ETWTracingController::AddTraceEvent(
     const uint8_t *arg_types,
     const uint64_t *arg_values,
     std::unique_ptr<v8::ConvertableToTraceFormat> *arg_convertables,
-    unsigned int flags){
-  
+    unsigned int flags) {
   std::vector<const char *> names(8);
   std::vector<uint8_t> types(8);
   std::vector<uint64_t> values(8);
@@ -49,7 +49,7 @@ uint64_t ETWTracingController::AddTraceEvent(
   EventWriteGENERIC_EVENT(
       phase,
       name,
-	  0,
+      0,
       scope,
       id,
       bind_id,
@@ -203,7 +203,7 @@ void WorkerThreadsTaskRunner::PostDelayedTask(
     }
 
     double deadline =
-        std::chrono::steady_clock::now().time_since_epoch().count() +
+        std::chrono::high_resolution_clock::now().time_since_epoch().count() +
         delay_in_seconds *
             std::chrono::duration_cast<std::chrono::nanoseconds>(
                 std::chrono::seconds(1))
@@ -309,7 +309,8 @@ std::shared_ptr<v8::TaskRunner> V8Platform::GetForegroundTaskRunner(
     v8::Isolate *isolate) {
   IsolateData *isolate_data =
       reinterpret_cast<IsolateData *>(isolate->GetData(ISOLATE_DATA_SLOT));
-  return *reinterpret_cast<std::shared_ptr<v8::TaskRunner>*>( (isolate_data->foreground_task_runner_));
+  return *reinterpret_cast<std::shared_ptr<v8::TaskRunner> *>(
+      (isolate_data->foreground_task_runner_));
 }
 
 void V8Platform::CallOnWorkerThread(std::unique_ptr<v8::Task> task) {
@@ -352,12 +353,16 @@ int V8Platform::NumberOfWorkerThreads() {
 
 double V8Platform::MonotonicallyIncreasingTime() {
   return static_cast<double>(
-      std::chrono::steady_clock::now().time_since_epoch().count());
+      std::chrono::duration_cast<std::chrono::seconds>(
+          std::chrono::high_resolution_clock::now().time_since_epoch())
+          .count());
 }
 
 double V8Platform::CurrentClockTimeMillis() {
   return static_cast<double>(
-      std::chrono::system_clock::now().time_since_epoch().count());
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::high_resolution_clock::now().time_since_epoch())
+          .count());
 }
 
 v8::TracingController *V8Platform::GetTracingController() {

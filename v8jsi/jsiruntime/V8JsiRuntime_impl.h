@@ -19,6 +19,8 @@
 
 #include <cstdlib>
 
+#define USE_DEFAULT_PLATFORM
+
 using namespace facebook;
 
 #define _ISOLATE_CONTEXT_ENTER                \
@@ -78,35 +80,44 @@ enum class CacheType { NoCache, CodeCache, FullCodeCache };
 
 class V8PlatformHolder {
  public:
+#ifdef USE_DEFAULT_PLATFORM
+  v8::Platform &Get() {
+#else
   V8Platform &Get() {
+#endif
+
     assert(use_count_s_ > 0);
     assert(platform_s_);
-    
-	if (!platform_s_)
+
+    if (!platform_s_)
       std::terminate();
 
-	return *platform_s_;
+    return *platform_s_;
   }
 
   V8PlatformHolder() {
     std::lock_guard<std::mutex> guard(mutex_s_);
-	/*uint32_t current = use_count_s_;
-    while (!use_count_s_.compare_exchange_weak(current, current + 1))
-      ;*/
+    /*uint32_t current = use_count_s_;
+while (!use_count_s_.compare_exchange_weak(current, current + 1))
+  ;*/
 
     if (use_count_s_++ == 0) {
+#ifdef USE_DEFAULT_PLATFORM
+      platform_s_ = v8::platform::NewDefaultPlatform();
+#else
       platform_s_ = std::make_unique<V8Platform>(true);
+#endif
       v8::V8::InitializePlatform(platform_s_.get());
     }
   }
 
   ~V8PlatformHolder() {
     std::lock_guard<std::mutex> guard(mutex_s_);
-	/*uint32_t current = use_count_s_;
-    while (!use_count_s_.compare_exchange_weak(current, current - 1))
-      ;*/
+    /*uint32_t current = use_count_s_;
+while (!use_count_s_.compare_exchange_weak(current, current - 1))
+  ;*/
 
-	if (--use_count_s_  == 0) {
+    if (--use_count_s_ == 0) {
       v8::V8::ShutdownPlatform();
       platform_s_ = nullptr;
     }
@@ -116,7 +127,11 @@ class V8PlatformHolder {
   V8PlatformHolder(const V8PlatformHolder &) = delete;
   V8PlatformHolder &operator=(const V8PlatformHolder &) = delete;
 
+#ifdef USE_DEFAULT_PLATFORM
+  static std::unique_ptr<v8::Platform> platform_s_;
+#else
   static std::unique_ptr<V8Platform> platform_s_;
+#endif
   static std::atomic_uint32_t use_count_s_;
   static std::mutex mutex_s_;
 
@@ -554,6 +569,11 @@ class V8Runtime : public facebook::jsi::Runtime {
       size_t initial_heap_limit);
 
   static void GCPrologueCallback(
+      v8::Isolate *isolate,
+      v8::GCType type,
+      v8::GCCallbackFlags flags);
+
+  static void GCEpilogueCallback(
       v8::Isolate *isolate,
       v8::GCType type,
       v8::GCCallbackFlags flags);

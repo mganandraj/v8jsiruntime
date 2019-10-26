@@ -2,6 +2,9 @@
 
 #include "scripthost.h"
 
+#include <fstream>
+#include <streambuf>
+
 int main() {
   v8runtime::V8RuntimeArgs args{};
 
@@ -10,26 +13,35 @@ int main() {
   // sourceURL=filename.js"); std::string script("print('Hoy'); //#
   // sourceURL=filename.js");
 
-  std::string script(
-      "function fib(n) { if (n < 2) { return 1; } return fib(n - 1) + fib(n - 2) } print(fib(20));");
+  //std::string script(
+  //    "function fib(n) { if (n < 2) { return 1; } return fib(n - 1) + fib(n - 2) } print(fib(20));");
 
-  std::string script2(
-      "function fib(n) { if (n < 2) { return 1; } return fib(n - 1) + fib(n - 2) } print(fib(20));");
+  std::string script(
+	 "print(new Date())");
+
+  /*std::ifstream t("D:\\work\\moment_test\\dist\\index.js");
+  std::string script(
+      (std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());*/
+
+  //std::string script2(
+  //    "function fib(n) { if (n < 2) { return 1; } return fib(n - 1) + fib(n - 2) } print(fib(20));");
 
   {
     auto taskRunner = std::make_shared<MyTaskRunner>();
-    auto taskRunner2 = std::make_shared<MyTaskRunner>();
+    // auto taskRunner2 = std::make_shared<MyTaskRunner>();
 
     ScriptHost host(taskRunner);
-    ScriptHost host2(taskRunner2);
+    // ScriptHost host2(taskRunner2);
 
     host.runScript(script);
-    host2.runScript(script);
+    // host2.runScript(script);
 
     getchar();
 
+	getchar();
+
     host.Reset();
-    host2.Reset();
+    // host2.Reset();
 
 	getchar();
   }

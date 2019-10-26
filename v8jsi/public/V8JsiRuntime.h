@@ -66,7 +66,7 @@ struct V8RuntimeArgs {
   bool liteMode{false};
 
   bool trackGCObjectStats{false};
-
+  
   bool backgroundMode{false};
 
   bool enableTracing{false};

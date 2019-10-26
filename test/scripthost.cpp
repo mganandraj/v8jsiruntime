@@ -198,7 +198,7 @@ ScriptHost::ScriptHost(std::shared_ptr<MyTaskRunner> jsiTaskRunner) {
     args.trackGCObjectStats = false;
     args.backgroundMode = false;
 
-	args.enableInspector = true;
+	args.enableInspector = false;
 
     args.maximum_heap_size_in_bytes = 10 * 1024 * 1024;
 
@@ -380,7 +380,7 @@ void ScriptHost::runScript(std::string &script) {
   jsiTaskRunner_->PostTask(std::make_unique<FunctionTask>([this, script]() {
     try {
       std::string sourceUrl("MyJS");
-      runtime_->evaluateJavaScript(
+      jsi::Value result = runtime_->evaluateJavaScript(
           std::make_unique<StringBuffer>(script), sourceUrl);
     } catch (std::exception &exc) {
       std::cout << exc.what();

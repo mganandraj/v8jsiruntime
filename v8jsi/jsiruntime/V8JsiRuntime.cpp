@@ -28,7 +28,11 @@ namespace v8runtime {
 
 thread_local uint16_t V8Runtime::tls_isolate_usage_counter_ = 0;
 
+#ifdef USE_DEFAULT_PLATFORM
+std::unique_ptr<v8::Platform> V8PlatformHolder::platform_s_;
+#else
 /*static */ std::unique_ptr<V8Platform> V8PlatformHolder::platform_s_;
+#endif
 /*static */ std::atomic_uint32_t V8PlatformHolder::use_count_s_ = 0;
 /*static */ std::mutex V8PlatformHolder::mutex_s_;
 
@@ -148,15 +152,70 @@ size_t V8Runtime::NearHeapLimitCallback(
   return current_heap_limit + 5 * 1024 * 1024;
 }
 
+static std::string GCTypeToString(
+    std::string &prefix,
+    v8::GCType type,
+    v8::GCCallbackFlags gcflags) {
+  switch (type) {
+    case v8::GCType::kGCTypeScavenge:
+      prefix += ",Scavenge ";
+      break;
+    case v8::GCType::kGCTypeIncrementalMarking:
+      prefix += ",IncrementalMarking";
+      break;
+    case v8::GCType::kGCTypeMarkSweepCompact:
+      prefix += ",MarkSweepCompact";
+      break;
+    case v8::GCType::kGCTypeProcessWeakCallbacks:
+      prefix += ",ProcessWeakCallbacks";
+      break;
+    default:
+      prefix += ",";
+      prefix += std::to_string(type);
+  }
+
+  switch (gcflags) {
+    case v8::GCCallbackFlags::kGCCallbackFlagCollectAllAvailableGarbage:
+      prefix += ",AllGarbage";
+      break;
+    case v8::GCCallbackFlags::kGCCallbackFlagCollectAllExternalMemory:
+      prefix += ",AllExternalMemory";
+      break;
+    case v8::GCCallbackFlags::kGCCallbackFlagConstructRetainedObjectInfos:
+      prefix += ",ConstructRetainedObjectInfos";
+      break;
+    case v8::GCCallbackFlags::kGCCallbackFlagForced:
+      prefix += ",Forces";
+      break;
+    case v8::GCCallbackFlags::
+        kGCCallbackFlagSynchronousPhantomCallbackProcessing:
+      prefix += ",SynchronousPhantomCallbackProcessing";
+      break;
+    case v8::GCCallbackFlags::kGCCallbackScheduleIdleGarbageCollection:
+      prefix += ",ScheduleIdleGarbageCollection";
+      break;
+    default:
+      prefix += ",";
+      prefix += std::to_string(type);
+  }
+
+  return prefix;
+}
+
 void V8Runtime::GCPrologueCallback(
     v8::Isolate *isolate,
     v8::GCType type,
     v8::GCCallbackFlags flags) {
-  EventWriteV8JSI_LOG(
-      "GCPrologueCallback",
-      std::to_string(type).c_str(),
-      std::to_string(flags).c_str(),
-      "");
+  std::string prefix("GCPrologue");
+  DumpCounters(GCTypeToString(prefix, type, flags).c_str());
+}
+
+void V8Runtime::GCEpilogueCallback(
+    v8::Isolate *isolate,
+    v8::GCType type,
+    v8::GCCallbackFlags flags) {
+  std::string prefix("GCEpilogue");
+  DumpCounters(GCTypeToString(prefix, type, flags).c_str());
 }
 
 CounterMap *V8Runtime::counter_map_;
@@ -394,8 +453,10 @@ v8::Isolate *V8Runtime::CreateNewIsolate() {
     MapCounters(isolate_, "v8jsi");
   }
 
-  isolate_->SetJitCodeEventHandler(
-      v8::kJitCodeEventDefault, JitCodeEventListener);
+  if (args_.enableJitTracing) {
+    isolate_->SetJitCodeEventHandler(
+        v8::kJitCodeEventDefault, JitCodeEventListener);
+  }
 
   if (args_.backgroundMode) {
     isolate_->IsolateInBackgroundNotification();
@@ -407,6 +468,7 @@ v8::Isolate *V8Runtime::CreateNewIsolate() {
 
   if (args_.enableGCTracing) {
     isolate_->AddGCPrologueCallback(GCPrologueCallback);
+    isolate_->AddGCEpilogueCallback(GCEpilogueCallback);
   }
 
   isolate_->AddNearHeapLimitCallback(NearHeapLimitCallback, nullptr);
@@ -537,8 +599,6 @@ jsi::Value V8Runtime::evaluateJavaScript(
   }
 
   jsi::Value result = ExecuteString(sourceV8String, sourceURL);
-
-  DumpCounters("evaluateJavaScript completion.");
   return result;
 }
 
@@ -677,7 +737,8 @@ jsi::Value V8Runtime::ExecuteString(
     options = v8::ScriptCompiler::CompileOptions::kConsumeCodeCache;
   } else {
     // Eager compile so that we will write it to disk.
-    options = v8::ScriptCompiler::CompileOptions::kEagerCompile;
+    // options = v8::ScriptCompiler::CompileOptions::kEagerCompile;
+    options = v8::ScriptCompiler::CompileOptions::kNoCompileOptions;
   }
 
   v8::ScriptCompiler::Source script_source(source, origin, cached_data);
@@ -716,8 +777,8 @@ jsi::Value V8Runtime::ExecuteString(
             "perf");
       }
 
-      // return createValue(result);
-      return createValue(v8::Undefined(GetIsolate()));
+      return createValue(result);
+      // return createValue(v8::Undefined(GetIsolate()));
     }
   }
 }
@@ -1183,8 +1244,6 @@ jsi::Value V8Runtime::call(
       static_cast<int>(count),
       argv.data());
 
-  DumpCounters("callFunction completion.");
-
   // Call can return
   if (result.IsEmpty()) {
     return createValue(v8::Undefined(GetIsolate()));
@@ -1339,15 +1398,6 @@ v8::Local<v8::Object> V8Runtime::objectRef(const jsi::Object &obj) {
 }
 
 std::unique_ptr<jsi::Runtime> makeV8Runtime(V8RuntimeArgs &&args) {
-  // TODO :: Push the ownership of the platform to the caller.
-  // static V8Platform platform(args.enableTracing);
-  // static std::atomic_flag is_platform_initialized{false};
-  // if (!is_platform_initialized.test_and_set(std::memory_order_acquire)) {
-  //   v8::V8::InitializePlatform(static_cast<v8::Platform *>(&platform));
-  // }
-
-  // args.platform = &platform;
-
   return std::make_unique<V8Runtime>(std::move(args));
 }
 
