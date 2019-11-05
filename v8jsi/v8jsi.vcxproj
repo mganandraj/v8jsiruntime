@@ -51,11 +51,15 @@
   <PropertyGroup Label="UserMacros">
     <V8Root>E:\JS\v8\v8\</V8Root>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="UserMacros">
+    <INSPECTOR_AVAILABLE>true</INSPECTOR_AVAILABLE>
+  </PropertyGroup>
   <PropertyGroup>
     <IncludePath>.;$(V8Root)include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
+      <PreprocessorDefinitions Condition="'$(INSPECTOR_AVAILABLE)'=='true'">INSPECTOR_AVAILABLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>      
       <PreprocessorDefinitions>WIN32;_WINDOWS;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <!-- <PreprocessorDefinitions>JSI_CREATE_SHARED_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions> -->
     </ClCompile>
@@ -85,6 +89,7 @@
       <PreprocessorDefinitions>USE_AURA=1;_HAS_EXCEPTIONS=0;__STD_C;_CRT_RAND_S;_CRT_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_DEPRECATE;_ATL_NO_OPENGL;_WINDOWS;CERT_CHAIN_PARA_HAS_EXTRA_FIELDS;PSAPI_VERSION=2;WIN32;_SECURE_ATL;_USING_V110_SDK71_;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;WIN32_LEAN_AND_MEAN;NOMINMAX;_UNICODE;UNICODE;NTDDI_VERSION=NTDDI_WIN10_RS2;_WIN32_WINNT=0x0A00;WINVER=0x0A00;_DEBUG;DYNAMIC_ANNOTATIONS_ENABLED=1;ENABLE_DISASSEMBLER;V8_TYPED_ARRAY_MAX_SIZE_IN_HEAP=64;ENABLE_MINOR_MC;OBJECT_PRINT;VERIFY_HEAP;V8_TRACE_MAPS;V8_ENABLE_ALLOCATION_TIMEOUT;V8_ENABLE_FORCE_SLOW_PATH;V8_ENABLE_DOUBLE_CONST_STORE_CHECK;ENABLE_HANDLE_ZAPPING;V8_USE_SNAPSHOT;V8_SNAPSHOT_NATIVE_CODE_COUNTERS;V8_CONCURRENT_MARKING;V8_ENABLE_LAZY_SOURCE_POSITIONS;V8_CHECK_MICROTASKS_SCOPES_CONSISTENCY;V8_EMBEDDED_BUILTINS;V8_SHARED_RO_HEAP;V8_WIN64_UNWINDING_INFO;V8_ENABLE_REGEXP_INTERPRETER_THREADED_DISPATCH;V8_ENABLE_CHECKS;V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;V8_TARGET_ARCH_IA32;DEBUG;DISABLE_UNTRUSTED_CODE_MITIGATIONS;V8_ENABLE_CHECKS;V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;V8_ENABLE_CHECKS;V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
+
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -108,15 +113,16 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
+
   <ItemGroup>
-    <ClCompile Include="inspector\inspector_agent.cpp" />
-    <ClCompile Include="inspector\inspector_socket.cpp" />
-    <ClCompile Include="inspector\inspector_socket_server.cpp" />
-    <ClCompile Include="inspector\inspector_tcp.cpp" />
-    <ClCompile Include="inspector\inspector_utils.cpp" />
-    <ClCompile Include="inspector\llhttp.c" />
-    <ClCompile Include="inspector\llhttp_api.c" />
-    <ClCompile Include="inspector\llhttp_http.c" /> 
+    <ClCompile Include="inspector\inspector_agent.cpp" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/>
+    <ClCompile Include="inspector\inspector_socket.cpp" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/>
+    <ClCompile Include="inspector\inspector_socket_server.cpp" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/>
+    <ClCompile Include="inspector\inspector_tcp.cpp" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/>
+    <ClCompile Include="inspector\inspector_utils.cpp" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/>
+    <ClCompile Include="inspector\llhttp.c" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/>
+    <ClCompile Include="inspector\llhttp_api.c" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/>
+    <ClCompile Include="inspector\llhttp_http.c" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/> 
     <ClCompile Include="jsiruntime\V8JsiRuntime.cpp" />
     <ClCompile Include="jsi\jsi.cpp" />
     <ClCompile Include="jsi\jsilib-windows.cpp" />

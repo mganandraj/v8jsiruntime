@@ -30,14 +30,14 @@ class FBJSRuntime;
 namespace facebook {
 namespace jsi {
 
-class JSI_EXPORT Buffer {
+class Buffer {
  public:
   virtual ~Buffer();
   virtual size_t size() const = 0;
   virtual const uint8_t* data() const = 0;
 };
 
-class JSI_EXPORT StringBuffer : public Buffer {
+class StringBuffer : public Buffer {
  public:
   StringBuffer(std::string s) : s_(std::move(s)) {}
   size_t size() const override {
@@ -55,7 +55,7 @@ class JSI_EXPORT StringBuffer : public Buffer {
 /// optimized for execution, in a runtime-specific way. Construct one via
 /// jsi::Runtime::prepareJavaScript().
 /// ** This is an experimental API that is subject to change. **
-JSI_EXPORT class PreparedJavaScript {
+class PreparedJavaScript {
  protected:
   PreparedJavaScript() = default;
 
@@ -144,7 +144,7 @@ class JSI_EXPORT HostObject {
 /// in a non-Runtime-managed object, and not clean it up before the Runtime
 /// is shut down.  If your lifecycle is such that avoiding this is hard,
 /// you will probably need to do use your own locks.
-class JSI_EXPORT Runtime {
+class Runtime {
  public:
   virtual ~Runtime();
 
@@ -252,6 +252,10 @@ class JSI_EXPORT Runtime {
   virtual String createStringFromUtf8(const uint8_t* utf8, size_t length) = 0;
   virtual std::string utf8(const String&) = 0;
 
+  // \return a \c Value created from a utf8-encoded JSON string. The default
+  // implementation creates a \c String and invokes JSON.parse.
+  virtual Value createValueFromJsonUtf8(const uint8_t* json, size_t length);
+
   virtual Object createObject() = 0;
   virtual Object createObject(std::shared_ptr<HostObject> ho) = 0;
   virtual std::shared_ptr<HostObject> getHostObject(const jsi::Object&) = 0;
@@ -319,7 +323,7 @@ class JSI_EXPORT Runtime {
 };
 
 // Base class for pointer-storing types.
-class JSI_EXPORT Pointer {
+class Pointer {
  protected:
   explicit Pointer(Pointer&& other) : ptr_(other.ptr_) {
     other.ptr_ = nullptr;
@@ -497,7 +501,7 @@ class Array;
 class Function;
 
 /// Represents a JS Object.  Movable, not copyable.
-class JSI_EXPORT Object : public Pointer {
+class Object : public Pointer {
  public:
   using Pointer::Pointer;
 
@@ -889,7 +893,7 @@ class Function : public Object {
 /// Represents any JS Value (undefined, null, boolean, number, symbol,
 /// string, or object).  Movable, or explicitly copyable (has no copy
 /// ctor).
-class JSI_EXPORT Value {
+class Value {
  public:
   /// Default ctor creates an \c undefined JS value.
   Value() : Value(UndefinedKind) {}
@@ -974,7 +978,9 @@ class JSI_EXPORT Value {
 
   // \return a \c Value created from a utf8-encoded JSON string.
   static Value
-  createFromJsonUtf8(Runtime& runtime, const uint8_t* json, size_t length);
+  createFromJsonUtf8(Runtime& runtime, const uint8_t* json, size_t length) {
+    return runtime.createValueFromJsonUtf8(json, length);
+  }
 
   /// \return according to the SameValue algorithm see more here:
   //  https://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4

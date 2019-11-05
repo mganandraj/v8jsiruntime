@@ -539,6 +539,7 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
 
   v8::Context::Scope context_scope(context_.Get(GetIsolate()));
 
+#ifdef INSPECTOR_AVAILABLE
   if (args_.enableInspector) {
     inspector_agent_ = std::make_unique<inspector::Agent>(
         platform_holder_.Get(),
@@ -549,6 +550,7 @@ V8Runtime::V8Runtime(V8RuntimeArgs &&args) : args_(std::move(args)) {
     inspector_agent_->start();
     inspector_agent_->waitForDebugger();
   }
+#endif
 
   createHostObjectConstructorPerContext();
 }

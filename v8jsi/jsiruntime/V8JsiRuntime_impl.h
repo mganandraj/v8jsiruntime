@@ -19,7 +19,9 @@
 
 #include <cstdlib>
 
+#ifndef INSPECTOR_AVAILABLE
 #define USE_DEFAULT_PLATFORM
+#endif
 
 using namespace facebook;
 
@@ -637,7 +639,9 @@ class V8Runtime : public facebook::jsi::Runtime {
   facebook::jsi::Runtime::PointerValue *makeObjectValue(
       v8::Local<v8::Object> obj) const;
 
+#ifdef INSPECTOR_AVAILABLE
   std::unique_ptr<inspector::Agent> inspector_agent_;
+#endif
 
   V8RuntimeArgs args_;
 
