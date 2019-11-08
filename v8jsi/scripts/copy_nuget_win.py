@@ -52,9 +52,15 @@ def copy_v8_headers(triplet):
     filter = ''
     call(['robocopy', source_folder, dest_folder, filter, '/S', '/LOG:robocopy_includes.txt'])
 
-def copy_jsi_headers(triplet):
-    source_folder = v8jsi_source + 'jsi\\'
-    dest_folder = nuget_installed + triplet + '\\include\\jsi_ref\\jsi\\'
+def copy_jsi_ref_headers(triplet):
+    source_folder = v8jsi_source + 'external_includes\\jsi_ref\\'
+    dest_folder = nuget_installed + triplet + '\\include\\jsi_ref\\'
+    filter = ''
+    call(['robocopy', source_folder, dest_folder, filter, '/S', '/LOG:robocopy_includes.txt'])
+
+def copy_jsi_rnw_headers(triplet):
+    source_folder = v8jsi_source + 'external_includes\\jsi_rnw\\'
+    dest_folder = nuget_installed + triplet + '\\include\\jsi_rnw\\'
     filter = ''
     call(['robocopy', source_folder, dest_folder, filter, '/S', '/LOG:robocopy_includes.txt'])
 
@@ -80,18 +86,21 @@ def do1():
     copy_v8_headers('x64-windows')
     copy_v8_headers('x86-windows')
 
-    copy_jsi_headers('x64-windows')
-    copy_jsi_headers('x86-windows')
+    copy_jsi_ref_headers('x64-windows')
+    copy_jsi_ref_headers('x86-windows')
 
-    source_folder = nuget_installed + 'x64-windows\\'
-    dest_folder = nuget_installed + 'x64-uwp\\'
-    filter = ''
-    call(['robocopy', source_folder, dest_folder, filter, '/S', '/LOG:robocopy_includes.txt'])
+    copy_jsi_rnw_headers('x64-windows')
+    copy_jsi_rnw_headers('x86-windows')
 
-    source_folder = nuget_installed + 'x86-windows\\'
-    dest_folder = nuget_installed + 'x86-uwp\\'
-    filter = ''
-    call(['robocopy', source_folder, dest_folder, filter, '/S', '/LOG:robocopy_includes.txt'])
+    # source_folder = nuget_installed + 'x64-windows\\'
+    # dest_folder = nuget_installed + 'x64-uwp\\'
+    # filter = ''
+    # call(['robocopy', source_folder, dest_folder, filter, '/S', '/LOG:robocopy_includes.txt'])
+
+    # source_folder = nuget_installed + 'x86-windows\\'
+    # dest_folder = nuget_installed + 'x86-uwp\\'
+    # filter = ''
+    # call(['robocopy', source_folder, dest_folder, filter, '/S', '/LOG:robocopy_includes.txt'])
 
 def main():
     do1()

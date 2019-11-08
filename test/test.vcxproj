@@ -43,7 +43,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>..\v8jsi;$(IncludePath)</IncludePath>
+    <IncludePath>..\v8jsi;..\v8jsi\external_includes\jsi_ref;..\v8jsi\external_includes\jsi_rnw;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -77,7 +77,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="scripthost.cpp" />
     <ClCompile Include="typedjsi.cpp" />
-    <ClCompile Include="../v8jsi/jsi/jsi.cpp" />
+    <ClCompile Include="../v8jsi/external_includes/jsi_ref/jsi/jsi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\v8jsi\v8jsi.vcxproj">

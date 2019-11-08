@@ -59,6 +59,8 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
+      <AdditionalIncludeDirectories>.\external_includes\jsi_ref;.\external_includes\jsi_rnw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+
       <PreprocessorDefinitions Condition="'$(INSPECTOR_AVAILABLE)'=='true'">INSPECTOR_AVAILABLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>      
       <PreprocessorDefinitions>WIN32;_WINDOWS;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <!-- <PreprocessorDefinitions>JSI_CREATE_SHARED_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions> -->
@@ -124,8 +126,8 @@
     <ClCompile Include="inspector\llhttp_api.c" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/>
     <ClCompile Include="inspector\llhttp_http.c" Condition="'$(INSPECTOR_AVAILABLE)'=='true'"/> 
     <ClCompile Include="jsiruntime\V8JsiRuntime.cpp" />
-    <ClCompile Include="jsi\jsi.cpp" />
-    <ClCompile Include="jsi\jsilib-windows.cpp" />
+    <ClCompile Include="external_includes\jsi_ref\jsi\jsi.cpp" />
+    <ClCompile Include="external_includes\jsi_ref\jsi\jsilib-windows.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="platform\V8Platform.cpp" />
   </ItemGroup>
@@ -139,15 +141,15 @@
     <ClInclude Include="inspector\llhttp.h" />
     <ClInclude Include="inspector\targetver.h" />
     <ClInclude Include="jsiruntime\V8JsiRuntime_impl.h" />
-    <ClInclude Include="jsi\decorator.h" />
-    <ClInclude Include="jsi\instrumentation.h" />
-    <ClInclude Include="jsi\jsi-inl.h" />
-    <ClInclude Include="jsi\jsi.h" />
-    <ClInclude Include="jsi\JSIDynamic.h" />
-    <ClInclude Include="jsi\jsilib.h" />
-    <ClInclude Include="jsi\RuntimeHolder.h" />
-    <ClInclude Include="jsi\ScriptStore.h" />
-    <ClInclude Include="jsi\threadsafe.h" />
+    <ClInclude Include="external_includes\jsi_ref\jsi\decorator.h" />
+    <ClInclude Include="external_includes\jsi_ref\jsi\instrumentation.h" />
+    <ClInclude Include="external_includes\jsi_ref\jsi\jsi-inl.h" />
+    <ClInclude Include="external_includes\jsi_ref\jsi\jsi.h" />
+    <ClInclude Include="external_includes\jsi_ref\jsi\JSIDynamic.h" />
+    <ClInclude Include="external_includes\jsi_ref\jsi\jsilib.h" />
+    <ClInclude Include="external_includes\jsi_rnw\jsi\shared\RuntimeHolder.h" />
+    <ClInclude Include="external_includes\jsi_rnw\jsi\shared\ScriptStore.h" />
+    <ClInclude Include="external_includes\jsi_ref\jsi\threadsafe.h" />
     <ClInclude Include="platform\V8Platform.h" />
     <ClInclude Include="public\V8JsiRuntime.h" />
   </ItemGroup>

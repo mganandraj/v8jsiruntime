@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jsi/ScriptStore.h>
+#include <jsi/shared/ScriptStore.h>
 #include <jsi/jsi.h>
 #include <memory>
 
